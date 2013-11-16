@@ -21,7 +21,7 @@ class Game():
 
     def __init__(self):
         self.screen = pygame.display.set_mode((Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT))
-        self.num_players = 4
+        self.num_players = 3
         self.load_level()
 
     def load_level(self):
@@ -31,15 +31,15 @@ class Game():
         for i in range(self.num_players):
 
             if i == 0:
-                x, y, direction = 0, 0, Game.RIGHT
+                x, y, direction, color = 0, 0, Game.RIGHT, (0, 255, 0)
             elif i == 1:
-                x, y, direction = Game.BOARD_WIDTH-1, Game.BOARD_HEIGHT-1, Game.LEFT
+                x, y, direction, color = Game.BOARD_WIDTH-1, Game.BOARD_HEIGHT-1, Game.LEFT, (0, 0, 255)
             elif i == 2:
-                x, y, direction = 0, Game.BOARD_HEIGHT-1, Game.UP
+                x, y, direction, color = 0, Game.BOARD_HEIGHT-1, Game.UP, (255, 0, 255)
             elif i == 3:
-                x, y, direction = Game.BOARD_WIDTH-1, 0, Game.DOWN
+                x, y, direction, color = Game.BOARD_WIDTH-1, 0, Game.DOWN, (0, 128, 128)
 
-            self.players.append(Player(x, y, direction))
+            self.players.append(Player(x, y, direction, color))
 
     def update(self):
         for player in self.players:
@@ -56,8 +56,8 @@ class Game():
         self.load_level()
 
 class Player():
-    def __init__(self, x, y, direction):
-        self.color = (0, 255, 0)
+    def __init__(self, x, y, direction, color):
+        self.color = color
         self.x = x
         self.y = y
         self.direction = direction
@@ -87,10 +87,11 @@ class Player():
         if self.y > Game.BOARD_HEIGHT:
             self.y = 0
 
-        # Check if player collided with herself
-        if head.rect.collidelist([p.rect for p in self.parts]) != -1:
-            Game().reset()
-            return
+        # Check if player collided with herself or other players
+        for player in Game().players:
+            if head.rect.collidelist([part.rect for part in player.parts]) != -1:
+                Game().players.remove(self)
+                return
 
         # Check if player ate an apple
         for apple in Game().apples:
