@@ -12,7 +12,7 @@ class GameObject(object):
         self.color = color
 
     def draw(self):
-        raise NotImplemented('Not implemented')
+        pygame.draw.rect(game.screen, self.color, self.rect)
 
     def update(self):
         raise NotImplemented('Not implemented')
@@ -20,9 +20,6 @@ class GameObject(object):
 class SnakePart(GameObject):
     def update(self):
         pass
-
-    def draw(self):
-        pygame.draw.rect(game.screen, self.color, self.rect)
 
 class Apple(GameObject):
     def __init__(self, x, y, color):
@@ -37,8 +34,9 @@ class Apple(GameObject):
 
         self.color = (self.color[0]+self.color_change[0], self.color[1]+self.color_change[1], self.color[2]+self.color_change[2])
 
-    def draw(self):
-        pygame.draw.rect(game.screen, self.color, self.rect)
+class Wall(GameObject):
+    def __init__(self, x, y):
+        super(Wall, self).__init__(x, y, (192, 192, 192))
 
 class Player(object):
     def __init__(self, name, x, y, direction, color):
@@ -78,10 +76,10 @@ class Player(object):
             self.y = 0
 
         # Check if player collided with herself or other players
-        for player in game.players:
-            if head.rect.collidelist([part.rect for part in player.parts]) != -1:
-                self.is_dead = True
-                return
+        solid_objs = [parts for player in game.players for parts in player.parts] + game.walls
+        if head.rect.collidelist([obj.rect for obj in solid_objs]) != -1:
+            self.is_dead = True
+            return
 
         # Check if player ate an apple
         for apple in game.apples:
@@ -137,5 +135,3 @@ class LogScreen(object):
         self.log.append(text)
         if len(self.log) > self.size:
             self.log.popleft()
-
-

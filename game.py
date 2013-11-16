@@ -13,25 +13,31 @@ LEFT, RIGHT, UP, DOWN = range(4)
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 num_players = 3
 players = []
+apples = []
+walls = []
 
 log_screen = game_objects.LogScreen()
 
-def load_level():
-    global apples
+player_colors = {
+        1: (0, 255, 0),
+        2: (0, 0, 255),
+        3: (255, 0, 255),
+        4: (0, 128, 128),
+}
 
-    log_screen.add("Good luck!")
-    apples = [game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)) for i in range(4)]
+def load_level(level):
+    layout = level.layout.split('\n')[1:-1]
+    for y, row in enumerate(layout):
+        for x, column in enumerate(row):
+            if column == 'W':
+                walls.append(game_objects.Wall(x, y))
+            elif column in ('1', '2', '3', '4'):
+                column = int(column)
+                if column <= num_players:
+                    players.append(game_objects.Player('Player ' + str(column), x, y,
+                        level.player_directions[column], player_colors[column]))
 
-    for i in range(num_players):
-        if i == 0:
-            x, y, direction, color = 0, 0, RIGHT, (0, 255, 0)
-        elif i == 1:
-            x, y, direction, color = BOARD_WIDTH-1, BOARD_HEIGHT-1, LEFT, (0, 0, 255)
-        elif i == 2:
-            x, y, direction, color = 0, BOARD_HEIGHT-1, UP, (255, 0, 255)
-        elif i == 3:
-            x, y, direction, color = BOARD_WIDTH-1, 0, DOWN, (0, 128, 128)
-        players.append(game_objects.Player("Player " + str(i+1), x, y, direction, color))
+    apples.extend([game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)) for i in range(4)])
 
 def update():
     for player in players:
@@ -46,6 +52,9 @@ def draw():
 
     for apple in apples:
         apple.draw()
+
+    for wall in walls:
+        wall.draw()
 
     log_screen.draw()
 

@@ -5,6 +5,7 @@ from pygame.locals import *
 
 import game
 import game_objects
+import level
 
 def main_loop():
     pygame.init()
@@ -19,7 +20,7 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
-    game.load_level()
+    game.load_level(level.level_two)
 
     while True:
         clock.tick(9)
