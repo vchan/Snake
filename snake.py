@@ -59,7 +59,7 @@ class Snake():
 
         head = SnakePart(self.x, self.y)
 
-        # Check if snake ate an apple       
+        # Check if snake ate an apple
         for apple in Game().apples:
             if apple.rect.colliderect(head.rect):
                 Game().apples.remove(apple)
@@ -82,7 +82,7 @@ class Snake():
             pygame.draw.rect(Game().screen, self.color, part.rect)
 
 class SnakePart():
-    def __init__(self, x, y):       
+    def __init__(self, x, y):
         self.width = Game.WINDOW_WIDTH / Game.BOARD_WIDTH
         self.height = Game.WINDOW_HEIGHT / Game.BOARD_HEIGHT
         self.rect = pygame.Rect(x*self.width, y*self.height, self.width, self.height)
@@ -95,7 +95,7 @@ class Apple():
         self.color = (255, 0, 0)
 
 
-def main():
+def main_loop():
     pygame.init()
     pygame.display.set_caption("Jason's Snake Game")
     clock = pygame.time.Clock()
@@ -128,4 +128,5 @@ def main():
         Game().draw()
         pygame.display.flip()
 
-main()
+if __name__ == '__main__':
+    main_loop()
