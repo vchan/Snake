@@ -1,8 +1,7 @@
 from collections import deque
 import pygame
 
-import snake
-Game = snake.Game
+import game as Game
 
 class Player():
     def __init__(self, x, y, direction, color):
@@ -37,15 +36,15 @@ class Player():
             self.y = 0
 
         # Check if player collided with herself or other players
-        for player in Game().players:
+        for player in Game.players:
             if head.rect.collidelist([part.rect for part in player.parts]) != -1:
-                Game().players.remove(self)
+                Game.players.remove(self)
                 return
 
         # Check if player ate an apple
-        for apple in Game().apples:
+        for apple in Game.apples:
             if apple.rect.colliderect(head.rect):
-                Game().apples.remove(apple)
+                Game.apples.remove(apple)
                 self.grow = True
 
         self.parts.append(head)
@@ -58,7 +57,7 @@ class Player():
 
     def draw(self):
         for part in self.parts:
-            pygame.draw.rect(Game().screen, self.color, part.rect)
+            pygame.draw.rect(Game.screen, self.color, part.rect)
 
     def set_direction(self, direction):
         if (direction == Game.LEFT and self.direction != Game.RIGHT) or \
@@ -86,4 +85,4 @@ class Apple():
         pass
 
 
-        
+
