@@ -25,14 +25,24 @@ class SnakePart(GameObject):
         pygame.draw.rect(game.screen, self.color, self.rect)
 
 class Apple(GameObject):
+    def __init__(self, x, y, color):
+        super(Apple, self).__init__(x, y, color)
+        self.color_change = (0, 30, 0)
+
     def update(self):
-        pass
+        if self.color[1] > 200:
+            self.color_change = (0, -30, 0)
+        elif self.color[1] <= 0:
+            self.color_change = (0, 30, 0)
+
+        self.color = (self.color[0]+self.color_change[0], self.color[1]+self.color_change[1], self.color[2]+self.color_change[2])
 
     def draw(self):
         pygame.draw.rect(game.screen, self.color, self.rect)
 
 class Player(object):
-    def __init__(self, x, y, direction, color):
+    def __init__(self, name, x, y, direction, color):
+        self.name = name
         self.color = color
         self.x = x
         self.y = y
@@ -40,8 +50,12 @@ class Player(object):
         self.parts = deque()
         self.parts.append(SnakePart(self.x, self.y, color))
         self.grow = False
+        self.is_dead = False
 
     def update(self):
+        if self.is_dead:
+            return
+
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:
@@ -66,14 +80,16 @@ class Player(object):
         # Check if player collided with herself or other players
         for player in game.players:
             if head.rect.collidelist([part.rect for part in player.parts]) != -1:
-                game.players.remove(self)
+                self.is_dead = True
                 return
 
         # Check if player ate an apple
         for apple in game.apples:
             if apple.rect.colliderect(head.rect):
                 game.apples.remove(apple)
+                game.add_apple()
                 self.grow = True
+                game.log_screen.add(self.name + " grew!")
 
         self.parts.append(head)
 
@@ -83,13 +99,43 @@ class Player(object):
         else:
             self.parts.popleft()
 
+        # Reset any locks
+        self._lock_set_direction = False
+
     def draw(self):
+        if self.is_dead:
+            return
+
         for part in self.parts:
             part.draw()
 
     def set_direction(self, direction):
+        if self._lock_set_direction:
+            return
+
         if (direction == game.LEFT and self.direction != game.RIGHT) or \
             (direction == game.RIGHT and self.direction != game.LEFT) or \
             (direction == game.UP and self.direction != game.DOWN) or \
             (direction == game.DOWN and self.direction != game.UP):
             self.direction = direction
+            self._lock_set_direction = True
+
+class LogScreen(object):
+    def __init__(self):
+        pygame.font.init()
+        self.font = pygame.font.SysFont("verdana", 12)
+        self.log = deque()
+        self.size = 5
+
+    def draw(self):
+        for i, text in enumerate(self.log):
+            text = self.font.render(text, 1, (255, 255, 255))
+            textpos = text.get_rect(top = 20 + i*20, left = game.WINDOW_WIDTH-150)
+            game.screen.blit(text, textpos)
+
+    def add(self, text):
+        self.log.append(text)
+        if len(self.log) > self.size:
+            self.log.popleft()
+
+

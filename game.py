@@ -14,10 +14,13 @@ screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 num_players = 3
 players = []
 
+log_screen = game_objects.LogScreen()
+
 def load_level():
     global apples
 
-    apples = [game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)) for i in range(80)]
+    log_screen.add("Good luck!")
+    apples = [game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)) for i in range(4)]
 
     for i in range(num_players):
         if i == 0:
@@ -28,7 +31,7 @@ def load_level():
             x, y, direction, color = 0, BOARD_HEIGHT-1, UP, (255, 0, 255)
         elif i == 3:
             x, y, direction, color = BOARD_WIDTH-1, 0, DOWN, (0, 128, 128)
-        players.append(game_objects.Player(x, y, direction, color))
+        players.append(game_objects.Player("Player " + str(i+1), x, y, direction, color))
 
 def update():
     for player in players:
@@ -44,6 +47,11 @@ def draw():
     for apple in apples:
         apple.draw()
 
+    log_screen.draw()
+
 def reset():
     load_level()
+
+def add_apple():
+    apples.append(game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)))
 
