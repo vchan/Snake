@@ -4,10 +4,10 @@ import pygame
 
 import game_objects
 
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+WINDOW_WIDTH = 1200
+WINDOW_HEIGHT = 750
 BOARD_WIDTH = 80
-BOARD_HEIGHT = 60
+BOARD_HEIGHT = 50
 LEFT, RIGHT, UP, DOWN = range(4)
 
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
