@@ -123,3 +123,64 @@ level_two.player_directions = {
     3: UP,
     4: LEFT,
 }
+
+
+level_three = Level()
+level_three.layout = """
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW          WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                         WWWWWWWWWWWWWWWWWWWWWWWWWWW                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                                                                              W
+W                                                   WWWWWWWWWWWWWWWWWWWWWWWWWWWW
+WWWWWWWWWWWWWWWWWWWWWWWWWWW                         W
+                        W W                         W
+                        W W                         W
+                        W W                         W
+                        W W                         W
+W                       W                           W
+W                       W W                         W
+W                       W W                         W                          W
+W                       W W                         W                          W
+W                       W W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         W                         W                          W
+W                         WWWWWWWWWWWWWWWWWWWWWWWWWWW                          W
+W                         W                                                    W
+W                         W                                                    W
+W                         W                                                    W
+W                         W                                                    W
+W1       3       4       2W                                                    W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+"""
+level_three.player_directions = {
+    1: UP,
+    2: UP,
+    3: UP,
+    4: UP,
+}

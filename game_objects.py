@@ -42,8 +42,11 @@ class Apple(GameObject):
             self.color_change = (0, -30, 0)
         elif self.color[1] <= 0:
             self.color_change = (0, 30, 0)
-
         self.color = (self.color[0]+self.color_change[0], self.color[1]+self.color_change[1], self.color[2]+self.color_change[2])
+
+    def draw(self):
+        radius = self.rect.width/2
+        pygame.draw.circle(game.screen, self.color, self.rect.center, int(radius*1.414))
 
 class Wall(GameObject):
     def __init__(self, x, y):
