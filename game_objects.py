@@ -17,13 +17,19 @@ class GameObject(object):
     def update(self):
         raise NotImplemented('Not implemented')
 
+    def collides_with(self, collidable):
+        if type(collidable) is list:
+            return self.rect.collidelist([c.rect for c in collidable]) != -1
+        else:
+            return self.rect.colliderect(collidable.rect)
+
 class SnakePart(GameObject):
     def update(self):
         pass
 
 class Apple(GameObject):
-    def __init__(self, x, y, color):
-        super(Apple, self).__init__(x, y, color)
+    def __init__(self, x, y):
+        super(Apple, self).__init__(x, y, (255, 0, 0))
         self.color_change = (0, 30, 0)
 
     def update(self):
@@ -51,9 +57,6 @@ class Player(object):
         self.is_dead = False
 
     def update(self):
-        if self.is_dead:
-            return
-
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:
@@ -63,33 +66,32 @@ class Player(object):
         elif self.direction == game.DOWN:
             self.y += 1
 
-        head = SnakePart(self.x, self.y, self.color)
-
         # Check if player is out of bounds
         if self.x < 0:
             self.x = game.BOARD_WIDTH-1
         if self.x >= game.BOARD_WIDTH:
             self.x = 0
+            # self.is_dead = True
+            # return
         if self.y < 0:
             self.y = game.BOARD_HEIGHT-1
         if self.y >= game.BOARD_HEIGHT:
             self.y = 0
 
-        # Check if player collided with herself or other players
-        solid_objs = [parts for player in game.players for parts in player.parts] + game.walls
-        if head.rect.collidelist([obj.rect for obj in solid_objs]) != -1:
+        # Check if player collided with something
+        head = SnakePart(self.x, self.y, self.color)
+        if head.collides_with(game.get_collidables()):
             self.is_dead = True
-            return
+            game.log_screen.add(self.name + " died!")
+        self.parts.append(head)
 
         # Check if player ate an apple
         for apple in game.apples:
-            if apple.rect.colliderect(head.rect):
+            if apple.collides_with(head):
                 game.apples.remove(apple)
                 game.add_apple()
                 self.grow = True
                 game.log_screen.add(self.name + " grew!")
-
-        self.parts.append(head)
 
         # Pop the tail
         if self.grow:
@@ -101,9 +103,6 @@ class Player(object):
         self._lock_set_direction = False
 
     def draw(self):
-        if self.is_dead:
-            return
-
         for part in self.parts:
             part.draw()
 
@@ -123,15 +122,15 @@ class LogScreen(object):
         pygame.font.init()
         self.font = pygame.font.SysFont("verdana", 12)
         self.log = deque()
-        self.size = 5
+        self.log_size = 5
 
     def draw(self):
         for i, text in enumerate(self.log):
             text = self.font.render(text, 1, (255, 255, 255))
-            textpos = text.get_rect(top = 20 + i*20, left = game.WINDOW_WIDTH-150)
+            textpos = text.get_rect(top = 30 + i*20, left = game.WINDOW_WIDTH-150)
             game.screen.blit(text, textpos)
 
     def add(self, text):
         self.log.append(text)
-        if len(self.log) > self.size:
+        if len(self.log) > self.log_size:
             self.log.popleft()

@@ -19,10 +19,10 @@ walls = []
 log_screen = game_objects.LogScreen()
 
 player_colors = {
-        1: (0, 255, 0),
-        2: (0, 0, 255),
-        3: (255, 0, 255),
-        4: (0, 128, 128),
+    1: (0, 255, 0),
+    2: (0, 0, 255),
+    3: (255, 0, 255),
+    4: (0, 128, 128),
 }
 
 def load_level(level):
@@ -37,21 +37,35 @@ def load_level(level):
                     players.append(game_objects.Player('Player ' + str(column), x, y,
                         level.player_directions[column], player_colors[column]))
 
-    apples.extend([game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)) for i in range(4)])
+    for i in range(4):
+        add_apple()
+
+def get_collidables():
+    collidables = []
+    for player in players:
+        if not player.is_dead:
+            for parts in player.parts:
+                collidables.append(parts)
+
+    collidables.extend(walls)
+
+    return collidables
 
 def update():
     for player in players:
-        player.update()
+        if not player.is_dead:
+            player.update()
 
     for apple in apples:
         apple.update()
 
 def draw():
-    for player in players:
-        player.draw()
-
     for apple in apples:
         apple.draw()
+    
+    for player in players:
+        if not player.is_dead:
+            player.draw()
 
     for wall in walls:
         wall.draw()
@@ -61,6 +75,12 @@ def draw():
 def reset():
     load_level()
 
-def add_apple():
-    apples.append(game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT), (255, 0, 0)))
+def add_apple():    
+    a = game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT))
+    if a.collides_with(get_collidables()):
+        add_apple()
+    else:
+        apples.append(a)
+
+
 
