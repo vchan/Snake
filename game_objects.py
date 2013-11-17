@@ -35,7 +35,7 @@ class SnakePart(GameObject):
         self.x = x
         self.y = y
         self.direction = direction
-        self.color = map(lambda n: n * 0.5, self.color)
+        self.color = game_effects.adjust_brightness(self.color, 0.5)
         self.particle_trail = game_effects.ParticleTrail(self, self.color)
         game.effects.append(self.particle_trail)
 
@@ -80,15 +80,15 @@ class SnakePart(GameObject):
 
 class Apple(GameObject):
     def __init__(self, x, y):
-        super(Apple, self).__init__(x, y, (255, 0, 0))
-        self.color_change = (0, 30, 0)
+        super(Apple, self).__init__(x, y, pygame.Color(255, 0, 0))
+        self.color_change = 30
 
     def update(self):
-        if self.color[1] > 200:
-            self.color_change = (0, -30, 0)
-        elif self.color[1] <= 0:
-            self.color_change = (0, 30, 0)
-        self.color = (self.color[0]+self.color_change[0], self.color[1]+self.color_change[1], self.color[2]+self.color_change[2])
+        if self.color.g > 200:
+            self.color_change = -30
+        elif self.color.g <= 0:
+            self.color_change = 30
+        self.color.g += self.color_change
 
     def draw(self):
         radius = int(self.rect.width/2*1.414)  # Expand the diameter to the length of the diagonal
@@ -96,7 +96,7 @@ class Apple(GameObject):
 
 class Wall(GameObject):
     def __init__(self, x, y):
-        super(Wall, self).__init__(x, y, (139, 69, 0))
+        super(Wall, self).__init__(x, y, pygame.Color(139, 69, 0))
 
 class Player(object):
     def __init__(self, name, x, y, direction, color):

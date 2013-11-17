@@ -15,6 +15,19 @@ def draw_rect(screen, color, rect, width=0):
     pygame.draw.rect(image, color, pygame.Rect(0, 0, rect.width, rect.height), width)
     screen.blit(image, (rect.left, rect.top))
 
+def clone_color(color):
+    return pygame.Color(color.r, color.g, color.b, color.a)
+
+def adjust_brightness(color, multiplier):
+    rgb = [color.r, color.g, color.b]
+    for i in range(len(rgb)):
+        rgb[i] = int(rgb[i] * multiplier)
+        if rgb[i] > 255:
+            rgb[i] = 255
+        if rgb[i] < 0:
+            rgb[i] = 0
+    return pygame.Color(rgb[0], rgb[1], rgb[2], color.a)
+
 class Explosion(object):
     def __init__(self, x, y, color, num_particles=20, particle_size=3, fade_speed=4, particle_type="circle"):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
@@ -24,7 +37,7 @@ class Explosion(object):
         self.max_speed = 10
         self.x = x
         self.y = y
-        self.color = (color[0], color[1], color[2], 255)
+        self.color = clone_color(color)
         self.fade_speed = fade_speed
 
         for i in range(self.num_particles):
@@ -43,19 +56,17 @@ class Explosion(object):
             p[1] += p[3]
 
         # Decrease alpha of particle
-        color = list(self.color)
-        color[3] -= self.fade_speed
-        self.color = tuple(color)
-
-        if color[3] < 0:
+        if self.color.a < self.fade_speed:
             game.effects.remove(self)
+        else:
+            self.color.a -= self.fade_speed
 
 class ParticleTrail(object):
     def __init__(self, followed_object, color):
         self.followed_object = followed_object
         self.particles = deque()
         self.num_particles = 20
-        self.color = color
+        self.color = clone_color(color)
         self.radius = 2
         self.particle_speed = 1
 
@@ -74,34 +85,37 @@ class ParticleTrail(object):
             particle[1] += particle[3]
 
 class Portal(object):
-    def __init__(self):
-        self.x = 200
-        self.y = 200
-        self.color = (255, 0, 0, 255)
-        self.fade_speed = 2
-        self.circles = [[1, self.color]]
-        self.spacing = 10
+    def __init__(self, x, y, color):
+        self.x = x
+        self.y = y
+        self.color = clone_color(color)
+        self.fade_speed = 10
+        self.fade_threshold = 40
+        self.ring_spacing = 30
+        self.ring_start_width = 10
+        self.rings = []
+        self.add_ring()        
+
+    def add_ring(self):
+        self.rings.append({'radius': self.ring_start_width, 'color': pygame.Color(self.color.r, self.color.g, self.color.b, 255)})
 
     def draw(self):
-        for radius, color in self.circles:
-            draw_circle(game.screen, color, (self.x, self.y), radius, 1)
+        for ring in self.rings:
+            draw_circle(game.screen, ring['color'], (self.x, self.y), ring['radius'], 1)
 
     def update(self):
-        # Increase radius of all circles
-        for circle in self.circles:
-            circle[0] += 1
+        # Increase radius of all rings
+        for ring in self.rings:
+            ring['radius'] += 1
 
-        # Create new circles emerging from the center
-        if self.circles[-1][0] > self.spacing:
-            self.circles.append([1, self.color])
+        # Create new rings emerging from the center
+        if self.rings[-1]['radius'] > self.ring_spacing:
+            self.add_ring()
 
-        # Start fading the bigger circles
-        for circle in filter(lambda c: c[0] > 0, self.circles):
-            color = list(circle[1])
-            color[3] -= self.fade_speed
-            if color[3] < 0:
-                self.circles.remove(circle)
+        for ring in filter(lambda r: r['radius'] > self.fade_threshold, self.rings):
+            if ring['color'].a < self.fade_speed:
+                self.rings.remove(ring)
             else:
-                circle[1] = tuple(color)
+                ring['color'].a -= self.fade_speed
 
 

@@ -21,3 +21,4 @@ class Level(object):
 
 level_shelley = Level('levels/level_shelley.ini')
 level_one = Level('levels/level1.ini')
+level_two = Level('levels/level2.ini')

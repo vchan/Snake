@@ -8,7 +8,7 @@ import game_objects
 import level
 
 def main_loop():
-    game_level = level.level_shelley
+    game_level = level.level_two
     pygame.init()
     pygame.display.set_caption("Jason's Snake Game")
     clock = pygame.time.Clock()
@@ -17,7 +17,7 @@ def main_loop():
     frame_count = 0
 
     background = pygame.Surface(game.screen.get_size()).convert()
-    background.fill((0, 0, 0))
+    background.fill(pygame.Color(0, 0, 0))
 
     player1_controls = [K_LEFT, K_RIGHT, K_UP, K_DOWN]
     player2_controls = [K_a, K_d, K_w, K_s]

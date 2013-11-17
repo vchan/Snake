@@ -22,10 +22,10 @@ effects = []
 log_screen = game_objects.LogScreen()
 
 player_colors = {
-    '1': (0, 255, 0),
-    '2': (0, 0, 255),
-    '3': (255, 0, 255),
-    '4': (0, 128, 128),
+    '1': pygame.Color(0, 255, 0),
+    '2': pygame.Color(0, 0, 255),
+    '3': pygame.Color(255, 0, 255),
+    '4': pygame.Color(0, 128, 128),
 }
 
 config = ConfigParser.SafeConfigParser()
@@ -91,3 +91,8 @@ def add_apple():
         add_apple()
     else:
         apples.append(a)
+        # effects.append(game_effects.Portal(a.rect.centerx, a.rect.centery, a.color))
+
+
+
+
