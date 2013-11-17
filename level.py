@@ -3,6 +3,67 @@ LEFT, RIGHT, UP, DOWN = range(4)
 class Level(object):
     pass
 
+level_shelley = Level()
+level_shelley.layout = """
+
+1                                                                              2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3                                                                              4 
+
+"""
+level_shelley.player_directions = {
+    1: RIGHT,
+    2: DOWN,
+    3: UP,
+    4: LEFT,
+}
+
 level_one = Level()
 level_one.layout = """
 WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW

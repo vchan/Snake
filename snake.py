@@ -20,7 +20,7 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
-    game.load_level(level.level_two)
+    game.load_level(level.level_shelley)
 
     frames_until_update = 3
     frame_count = 0
@@ -36,7 +36,7 @@ def main_loop():
                 if event.key == K_ESCAPE:
                     return
                 elif event.key == K_SPACE:
-                    game.players[0].grow = True
+                     game.players[0].grow = True
                 elif event.key in player1_controls:
                     game.players[0].set_direction(player1_controls.index(event.key))
                 elif event.key in player2_controls and game.num_players > 1:

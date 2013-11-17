@@ -9,8 +9,8 @@ BOARD_WIDTH = 80
 BOARD_HEIGHT = 50
 LEFT, RIGHT, UP, DOWN = range(4)
 
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-num_players = 2
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN)
+num_players = 3
 players = []
 apples = []
 walls = []
@@ -38,7 +38,7 @@ def load_level(level):
                     players.append(game_objects.Player('Player ' + str(column), x, y,
                         level.player_directions[column], player_colors[column]))
 
-    for i in range(4):
+    for i in range(8):
         add_apple()
 
 def get_collidables():

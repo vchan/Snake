@@ -62,6 +62,9 @@ class SnakePart(GameObject):
         self.rect = pygame.Rect(self.x*self.width, self.y*self.height, self.width, self.height)
         collidable = self.collides_with(game.get_collidables())
         if collidable:
+            if isinstance(collidable, Wall):
+                game.walls.remove(collidable)
+                game.effects.append(game_effects.Explosion(collidable.rect.left, collidable.rect.top, collidable.color))
             if self in game.missiles:
                 game.missiles.remove(self)
             if collidable in game.missiles:
