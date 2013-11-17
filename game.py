@@ -1,8 +1,7 @@
 from random import randrange
-
 import pygame
-
 import game_objects
+import game_effects
 
 WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 750
@@ -15,6 +14,7 @@ num_players = 3
 players = []
 apples = []
 walls = []
+effects = []
 
 log_screen = game_objects.LogScreen()
 

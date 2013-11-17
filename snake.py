@@ -22,8 +22,11 @@ def main_loop():
 
     game.load_level(level.level_two)
 
+    frames_until_update = 3
+    frame_count = 0
+
     while True:
-        clock.tick(9)
+        clock.tick(60)
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -42,9 +45,21 @@ def main_loop():
                 elif event.key in player4_controls and game.num_players > 3:
                     game.players[3].set_direction(player4_controls.index(event.key))
 
-        game.screen.blit(background, (0, 0))
-        game.update()
+        # We update less often than draw so that effects can animate smoother than the snakes
+        if frame_count < frames_until_update:
+            frame_count += 1
+        else:
+            game.update()
+            frame_count = 0
+
+
+        game.screen.blit(background, (0, 0))        
         game.draw()
+        
+        for effect in game.effects:
+            effect.update()
+            effect.draw()
+
         pygame.display.flip()
 
 if __name__ == '__main__':

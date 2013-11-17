@@ -1,8 +1,7 @@
 from collections import deque
-
 import pygame
-
 import game
+import game_effects
 
 class GameObject(object):
     def __init__(self, x, y, color):
@@ -48,7 +47,7 @@ class Apple(GameObject):
 
 class Wall(GameObject):
     def __init__(self, x, y):
-        super(Wall, self).__init__(x, y, (192, 192, 192))
+        super(Wall, self).__init__(x, y, (139, 69, 0))
 
 class Player(object):
     def __init__(self, name, x, y, direction, color):
@@ -77,8 +76,6 @@ class Player(object):
             self.x = game.BOARD_WIDTH-1
         if self.x >= game.BOARD_WIDTH:
             self.x = 0
-            # self.is_dead = True
-            # return
         if self.y < 0:
             self.y = game.BOARD_HEIGHT-1
         if self.y >= game.BOARD_HEIGHT:
@@ -87,17 +84,21 @@ class Player(object):
         # Check if player collided with something
         head = SnakePart(self, self.x, self.y, self.color)
         collidable = head.collides_with(game.get_collidables())
+
         if collidable:
             self.is_dead = True
+            game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color))
+
             log_text = self.name + " died!"
             if collidable.__class__.__name__ == "Wall":
-                log_text = self.name + " crashed into a wall!"
+                log_text = self.name + " splattered onto a wall!"
             elif collidable.__class__.__name__ == "SnakePart":
                 if collidable.player is self:
                     log_text = self.name + " crashed into their own body."
                 else:
                     log_text = self.name + " got owned by " + collidable.player.name + "!"
             game.log_screen.add(log_text)
+
         self.parts.append(head)
 
         # Check if player ate an apple
@@ -106,7 +107,7 @@ class Player(object):
                 game.apples.remove(apple)
                 game.add_apple()
                 self.grow = True
-                game.log_screen.add(self.name + " grew!")
+                game.log_screen.add("%s is now %s feet long." % (self.name, len(self.parts)))
 
         # Pop the tail
         if self.grow:
