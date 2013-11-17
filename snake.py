@@ -11,7 +11,10 @@ def main_loop():
     pygame.init()
     pygame.display.set_caption("Jason's Snake Game")
     clock = pygame.time.Clock()
-
+    
+    frames_until_update = 3
+    frame_count = 0
+    
     background = pygame.Surface(game.screen.get_size()).convert()
     background.fill((0, 0, 0))
 
@@ -20,10 +23,7 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
-    game.load_level(level.level_shelley)
-
-    frames_until_update = 3
-    frame_count = 0
+    game.load_level(level.level_two)
 
     while True:
         clock.tick(60)

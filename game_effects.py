@@ -9,15 +9,15 @@ def draw_circle(screen, color, (center_x, center_y), radius, width):
     screen.blit(image, (center_x-radius, center_y-radius))
 
 class Explosion(object):
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, color, num_particles=20, particle_radius=3, fade_speed=4):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
-        self.num_particles = 20
-        self.particle_radius = 3
+        self.num_particles = num_particles        
+        self.particle_radius = particle_radius
         self.max_speed = 10
         self.x = x
         self.y = y
         self.color = (color[0], color[1], color[2], 255)
-        self.fade_speed = 4
+        self.fade_speed = fade_speed
 
         for i in range(self.num_particles):
             self.particles.append([float(self.x), float(self.y), random.uniform(-self.max_speed, self.max_speed), random.uniform(-self.max_speed, self.max_speed)])
@@ -39,8 +39,21 @@ class Explosion(object):
         if color[3] < 0:
             game.effects.remove(self)
 
+class ParticleTrail(object):
+    def __init__(self, object_followed):
+        self.object_followed = object_followed
+        self.particles = []
+        self.color = (255, 0, 0, 255)
+
+    def draw(self):
+        for particle in self.particles:
+            draw_circle(game.screen, self.color, (partice[0], particle[1]), radius, 1)
+
+    def update(self):
+        self.particles.append([self.object_followed.x, self.object_followed.y])
+
 class Portal(object):
-    def __init__(self):        
+    def __init__(self):
         self.x = 200
         self.y = 200
         self.color = (255, 0, 0, 255)

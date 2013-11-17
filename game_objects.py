@@ -21,8 +21,6 @@ class GameObject(object):
     def collides_with(self, collidable):
         """Returns the object it collides with, otherwise false."""
         if isinstance(collidable, list):
-            if self in collidable:
-                collidable.remove(self)
             index = self.rect.collidelist([c.rect for c in collidable])
             return False if index == -1 else collidable[index]
         else:
@@ -33,7 +31,7 @@ class SnakePart(GameObject):
         super(SnakePart, self).__init__(x, y, color)
         self.player = player
 
-    def make_missile(self, x, y, direction):
+    def become_missile(self, x, y, direction):
         self.x = x
         self.y = y
         self.direction = direction
@@ -59,12 +57,15 @@ class SnakePart(GameObject):
         if self.y >= game.BOARD_HEIGHT:
             self.y = 0
 
+        # Keep rect object up to date
         self.rect = pygame.Rect(self.x*self.width, self.y*self.height, self.width, self.height)
-        collidable = self.collides_with(game.get_collidables())
+
+        # Check if missle collided with anything
+        collidable = self.collides_with(game.get_collidables(self))
         if collidable:
             if isinstance(collidable, Wall):
                 game.walls.remove(collidable)
-                game.effects.append(game_effects.Explosion(collidable.rect.left, collidable.rect.top, collidable.color))
+                game.effects.append(game_effects.Explosion(collidable.rect.left, collidable.rect.top, collidable.color, 5, 5, 5))
             if self in game.missiles:
                 game.missiles.remove(self)
             if collidable in game.missiles:
@@ -124,25 +125,14 @@ class Player(object):
 
         # Check if player collided with something
         head = SnakePart(self, self.x, self.y, self.color)
-        collidable = head.collides_with(game.get_collidables())
+        collided_object = head.collides_with(game.get_collidables())
 
-        if collidable:
-            if collidable in game.missiles:
-                game.missiles.remove(collidable)
-            self.is_dead = True
-            game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color))
-            self.parts.clear()
+        if collided_object:
+            if collided_object in game.missiles:
+                game.missiles.remove(collided_object)
+            self.kill(collided_object)
 
-            log_text = self.name + " died!"
-            if isinstance(collidable, Wall):
-                log_text = self.name + " splattered onto a wall!"
-            elif isinstance(collidable, SnakePart):
-                if collidable.player is self:
-                    log_text = self.name + " crashed into their own body."
-                else:
-                    log_text = self.name + " got owned by " + collidable.player.name + "!"
-            game.log_screen.add(log_text)
-
+        # Append new head after collision checks
         self.parts.append(head)
 
         # Check if player ate an apple
@@ -151,7 +141,7 @@ class Player(object):
                 game.apples.remove(apple)
                 game.add_apple()
                 self.grow = True
-                game.log_screen.add("%s is now %s feet long." % (self.name, len(self.parts)))
+                game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
 
         # Pop the tail
         if self.grow:
@@ -162,6 +152,21 @@ class Player(object):
         # Reset any locks
         self._lock_set_direction = False
 
+    def kill(self, collided_object=None):
+        self.is_dead = True
+        game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, 20, 5))
+
+        # Log it!
+        log_text = self.name + " died!"
+        if isinstance(collided_object, Wall):
+            log_text = self.name + " ran into a wall."
+        elif isinstance(collided_object, SnakePart):
+            if collided_object.player is self:
+                log_text = self.name + " killed themselves."
+            else:
+                log_text = self.name + " got killed by " + collided_object.player.name + "!"
+        game.log_screen.add(log_text)
+
     def draw(self):
         for part in self.parts:
             part.draw()
@@ -169,24 +174,22 @@ class Player(object):
     def fire(self):
         """ Fires a snakepart """
         if len(self.parts) > 1:
-            part = self.parts.popleft()
-            part.make_missile(self.x, self.y, self.direction)
-            part.update()
+            part = self.parts.popleft()  # Remove from the tail
+            part.become_missile(self.x, self.y, self.direction)  # Move missle to the head
+            part.update()  # Move missle in front of the head
             game.missiles.append(part)
             game.log_screen.add('%s fired a missile!' % self.name)
 
-    def set_direction(self, direction):
-        if self.is_dead:
+    def set_direction(self, direction):        
+        if self.is_dead or self._lock_set_direction:
             return
 
         if direction == self.direction:
             self.fire()
-
-        if self._lock_set_direction:
-            return
-
-        if (direction in (game.LEFT, game.RIGHT) and self.direction not in (game.LEFT, game.RIGHT)) or \
-            (direction in (game.UP, game.DOWN) and self.direction not in (game.UP, game.DOWN)):
+        elif (direction == game.LEFT and self.direction != game.RIGHT) or \
+            (direction == game.RIGHT and self.direction != game.LEFT) or \
+            (direction == game.UP and self.direction != game.DOWN) or \
+            (direction == game.DOWN and self.direction != game.UP):
             self.direction = direction
             self._lock_set_direction = True
 

@@ -9,7 +9,7 @@ BOARD_WIDTH = 80
 BOARD_HEIGHT = 50
 LEFT, RIGHT, UP, DOWN = range(4)
 
-screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 num_players = 3
 players = []
 apples = []
@@ -41,15 +41,17 @@ def load_level(level):
     for i in range(8):
         add_apple()
 
-def get_collidables():
+def get_collidables(exclude=None):
     collidables = []
     for player in players:
         if not player.is_dead:
             for parts in player.parts:
                 collidables.append(parts)
-
     collidables.extend(walls)
     collidables.extend(missiles)
+
+    if isinstance(exclude, game_objects.GameObject) and exclude in collidables:
+        collidables.remove(exclude)
 
     return collidables
 
