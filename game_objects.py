@@ -45,8 +45,8 @@ class Apple(GameObject):
         self.color = (self.color[0]+self.color_change[0], self.color[1]+self.color_change[1], self.color[2]+self.color_change[2])
 
     def draw(self):
-        radius = self.rect.width/2
-        pygame.draw.circle(game.screen, self.color, self.rect.center, int(radius*1.414))
+        radius = int(self.rect.width/2*1.414)  # Expand the diameter to the length of the diagonal
+        pygame.draw.circle(game.screen, self.color, self.rect.center, radius)
 
 class Wall(GameObject):
     def __init__(self, x, y):

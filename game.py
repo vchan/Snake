@@ -60,15 +60,15 @@ def update():
         apple.update()
 
 def draw():
-    for apple in apples:
-        apple.draw()
-    
     for player in players:
         if not player.is_dead:
             player.draw()
 
     for wall in walls:
         wall.draw()
+
+    for apple in apples:
+        apple.draw()
 
     log_screen.draw()
 

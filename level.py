@@ -153,8 +153,8 @@ WWWWWWWWWWWWWWWWWWWWWWWWWWW                         W
                         W W                         W
                         W W                         W
                         W W                         W
-W                       W                           W
-W                       W W                         W
+                        W                           W
+                        W W                         W
 W                       W W                         W                          W
 W                       W W                         W                          W
 W                       W W                         W                          W
@@ -169,14 +169,14 @@ W                         W                         W                          W
 W                         W                         W                          W
 W                         W                         W                          W
 W                         W                         W                          W
-W                         W                         W                          W
+W                         W1       3        4      2W                          W
 W                         WWWWWWWWWWWWWWWWWWWWWWWWWWW                          W
 W                         W                                                    W
 W                         W                                                    W
 W                         W                                                    W
 W                         W                                                    W
-W1       3       4       2W                                                    W
-WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW        WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
+W                         W                                                    W
+WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW          WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW
 """
 level_three.player_directions = {
     1: UP,
