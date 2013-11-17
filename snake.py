@@ -53,9 +53,9 @@ def main_loop():
             frame_count = 0
 
 
-        game.screen.blit(background, (0, 0))        
+        game.screen.blit(background, (0, 0))
         game.draw()
-        
+
         for effect in game.effects:
             effect.update()
             effect.draw()

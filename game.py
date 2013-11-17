@@ -14,6 +14,7 @@ num_players = 2
 players = []
 apples = []
 walls = []
+missiles = []
 effects = []
 
 log_screen = game_objects.LogScreen()
@@ -48,39 +49,34 @@ def get_collidables():
                 collidables.append(parts)
 
     collidables.extend(walls)
+    collidables.extend(missiles)
 
     return collidables
 
 def update():
+    for obj in apples + missiles:
+        obj.update()
+
     for player in players:
         if not player.is_dead:
             player.update()
 
-    for apple in apples:
-        apple.update()
-
 def draw():
-    for apple in apples:
-        apple.draw()
-    
+    for drawable in apples + walls + missiles:
+        drawable.draw()
+
     for player in players:
         if not player.is_dead:
             player.draw()
-
-    for wall in walls:
-        wall.draw()
 
     log_screen.draw()
 
 def reset():
     load_level()
 
-def add_apple():    
+def add_apple():
     a = game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT))
     if a.collides_with(get_collidables()):
         add_apple()
     else:
         apples.append(a)
-
-
-
