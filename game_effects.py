@@ -1,3 +1,4 @@
+from collections import deque
 import pygame
 import game
 import random
@@ -8,11 +9,18 @@ def draw_circle(screen, color, (center_x, center_y), radius, width):
     pygame.draw.circle(image, color, (radius, radius), radius, width)
     screen.blit(image, (center_x-radius, center_y-radius))
 
+def draw_rect(screen, color, rect, width=0):
+    """Handles alpha transparency"""
+    image = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA, 32)
+    pygame.draw.rect(image, color, pygame.Rect(0, 0, rect.width, rect.height), width)
+    screen.blit(image, (rect.left, rect.top))
+
 class Explosion(object):
-    def __init__(self, x, y, color, num_particles=20, particle_radius=3, fade_speed=4):
+    def __init__(self, x, y, color, num_particles=20, particle_size=3, fade_speed=4, particle_type="circle"):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
         self.num_particles = num_particles        
-        self.particle_radius = particle_radius
+        self.particle_size = particle_size
+        self.particle_type = particle_type
         self.max_speed = 10
         self.x = x
         self.y = y
@@ -24,7 +32,10 @@ class Explosion(object):
 
     def draw(self):
         for p in self.particles:
-            draw_circle(game.screen, self.color, (int(p[0]), int(p[1])), self.particle_radius, 0)
+            if self.particle_type == "rect":
+                draw_rect(game.screen, self.color, pygame.Rect(p[0], p[1], self.particle_size, self.particle_size))
+            else:
+                draw_circle(game.screen, self.color, (int(p[0]), int(p[1])), self.particle_size, 0)
 
     def update(self):
         for p in self.particles:
@@ -40,17 +51,26 @@ class Explosion(object):
             game.effects.remove(self)
 
 class ParticleTrail(object):
-    def __init__(self, object_followed):
-        self.object_followed = object_followed
-        self.particles = []
-        self.color = (255, 0, 0, 255)
+    def __init__(self, followed_object, color):
+        self.followed_object = followed_object
+        self.particles = deque()
+        self.num_particles = 20
+        self.color = color
+        self.radius = 1
+
 
     def draw(self):
         for particle in self.particles:
-            draw_circle(game.screen, self.color, (partice[0], particle[1]), radius, 1)
+            draw_circle(game.screen, self.color, (particle[0], particle[1]), self.radius, 0)
 
     def update(self):
-        self.particles.append([self.object_followed.x, self.object_followed.y])
+        self.particles.append([self.followed_object.rect.centerx, self.followed_object.rect.centery, random.uniform(-1, 1), random.uniform(-1, 1)])
+        if len(self.particles) > self.num_particles:
+            self.particles.popleft()
+
+        for particle in self.particles:
+            particle[0] += particle[2]
+            particle[1] += particle[3]
 
 class Portal(object):
     def __init__(self):

@@ -7,8 +7,8 @@ class GameObject(object):
     def __init__(self, x, y, color):
         self.x = x
         self.y = y
-        self.width = game.WINDOW_WIDTH / game.BOARD_WIDTH
-        self.height = game.WINDOW_HEIGHT / game.BOARD_HEIGHT
+        self.width = game.CELL_WIDTH
+        self.height = game.CELL_HEIGHT
         self.rect = pygame.Rect(x*self.width, y*self.height, self.width, self.height)
         self.color = color
 
@@ -36,6 +36,8 @@ class SnakePart(GameObject):
         self.y = y
         self.direction = direction
         self.color = map(lambda n: n * 0.5, self.color)
+        self.particle_trail = game_effects.ParticleTrail(self, self.color)
+        game.effects.append(self.particle_trail)
 
     def update(self):
         if self.direction == game.LEFT:
@@ -67,9 +69,13 @@ class SnakePart(GameObject):
                 game.walls.remove(collidable)
                 game.effects.append(game_effects.Explosion(collidable.rect.left, collidable.rect.top, collidable.color, 5, 5, 5))
             if self in game.missiles:
-                game.missiles.remove(self)
+                self.destroy_missile()
             if collidable in game.missiles:
-                game.missiles.remove(collidable)
+                collidable.destroy_missile()
+
+    def destroy_missile(self):
+        game.missiles.remove(self)
+        game.effects.remove(self.particle_trail)
 
 class Apple(GameObject):
     def __init__(self, x, y):
@@ -129,7 +135,7 @@ class Player(object):
 
         if collided_object:
             if collided_object in game.missiles:
-                game.missiles.remove(collided_object)
+                collided_object.destroy_missle()
             self.kill(collided_object)
 
         # Append new head after collision checks
@@ -154,7 +160,9 @@ class Player(object):
 
     def kill(self, collided_object=None):
         self.is_dead = True
-        game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, 20, 5))
+
+        # Show explosion
+        game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, 20, 5, 4))
 
         # Log it!
         log_text = self.name + " died!"
