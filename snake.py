@@ -28,6 +28,7 @@ def main_loop():
     while True:
         clock.tick(60)
 
+        # Get input
         for event in pygame.event.get():
             if event.type == QUIT:
                 return
@@ -45,21 +46,23 @@ def main_loop():
                 elif event.key in player4_controls and game.num_players > 3:
                     game.players[3].set_direction(player4_controls.index(event.key))
 
-        # We update less often than draw so that effects can animate smoother than the snakes
+        # Update effects
+        for effect in game.effects:
+            effect.update()
+
+        # Update game - we update less often than we draw to slow down the frame rate
         if frame_count < frames_until_update:
             frame_count += 1
         else:
             game.update()
             frame_count = 0
 
-
+        # Draw the screen
         game.screen.blit(background, (0, 0))
         game.draw()
 
         for effect in game.effects:
-            effect.update()
             effect.draw()
-
         pygame.display.flip()
 
 if __name__ == '__main__':
