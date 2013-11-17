@@ -9,6 +9,8 @@ WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 750
 BOARD_WIDTH = 80
 BOARD_HEIGHT = 50
+CELL_WIDTH = WINDOW_WIDTH / BOARD_WIDTH
+CELL_HEIGHT = WINDOW_HEIGHT / BOARD_HEIGHT
 LEFT, RIGHT, UP, DOWN = range(4)
 
 players = []
@@ -48,15 +50,17 @@ def load_level(level):
     for i in range(level.num_apples):
         add_apple()
 
-def get_collidables():
+def get_collidables(exclude=None):
     collidables = []
     for player in players:
         if not player.is_dead:
             for parts in player.parts:
                 collidables.append(parts)
-
     collidables.extend(walls)
     collidables.extend(missiles)
+
+    if isinstance(exclude, game_objects.GameObject) and exclude in collidables:
+        collidables.remove(exclude)
 
     return collidables
 
