@@ -67,7 +67,7 @@ class SnakePart(GameObject):
         if collidable:
             if isinstance(collidable, Wall):
                 game.walls.remove(collidable)
-                game.effects.append(game_effects.Explosion(collidable.rect.left, collidable.rect.top, collidable.color, 5, 5, 5))
+                game.effects.append(game_effects.Explosion(collidable.rect.centerx, collidable.rect.centery, collidable.color, 5, 5, 5))
             if self in game.missiles:
                 self.destroy_missile()
             if collidable in game.missiles:
@@ -76,6 +76,7 @@ class SnakePart(GameObject):
     def destroy_missile(self):
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
+        game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, 5, 4, 6))
 
 class Apple(GameObject):
     def __init__(self, x, y):

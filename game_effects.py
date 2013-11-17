@@ -56,7 +56,8 @@ class ParticleTrail(object):
         self.particles = deque()
         self.num_particles = 20
         self.color = color
-        self.radius = 1
+        self.radius = 2
+        self.particle_speed = 1
 
 
     def draw(self):
@@ -64,7 +65,7 @@ class ParticleTrail(object):
             draw_circle(game.screen, self.color, (particle[0], particle[1]), self.radius, 0)
 
     def update(self):
-        self.particles.append([self.followed_object.rect.centerx, self.followed_object.rect.centery, random.uniform(-1, 1), random.uniform(-1, 1)])
+        self.particles.append([self.followed_object.rect.centerx, self.followed_object.rect.centery, random.uniform(-self.particle_speed, self.particle_speed), random.uniform(-self.particle_speed, self.particle_speed)])
         if len(self.particles) > self.num_particles:
             self.particles.popleft()
 
