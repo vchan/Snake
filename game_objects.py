@@ -18,12 +18,18 @@ class GameObject(object):
         raise NotImplemented('Not implemented')
 
     def collides_with(self, collidable):
+        """Returns the object it collides with, otherwise false."""
         if type(collidable) is list:
-            return self.rect.collidelist([c.rect for c in collidable]) != -1
+            index = self.rect.collidelist([c.rect for c in collidable])
+            return False if index == -1 else collidable[index]
         else:
             return self.rect.colliderect(collidable.rect)
 
 class SnakePart(GameObject):
+    def __init__(self, player, x, y, color):
+        super(SnakePart, self).__init__(x, y, color)
+        self.player = player
+
     def update(self):
         pass
 
@@ -52,7 +58,7 @@ class Player(object):
         self.y = y
         self.direction = direction
         self.parts = deque()
-        self.parts.append(SnakePart(self.x, self.y, color))
+        self.parts.append(SnakePart(self, self.x, self.y, color))
         self.grow = False
         self.is_dead = False
 
@@ -79,10 +85,19 @@ class Player(object):
             self.y = 0
 
         # Check if player collided with something
-        head = SnakePart(self.x, self.y, self.color)
-        if head.collides_with(game.get_collidables()):
+        head = SnakePart(self, self.x, self.y, self.color)
+        collidable = head.collides_with(game.get_collidables())
+        if collidable:
             self.is_dead = True
-            game.log_screen.add(self.name + " died!")
+            log_text = self.name + " died!"
+            if collidable.__class__.__name__ == "Wall":
+                log_text = self.name + " crashed into a wall!"
+            elif collidable.__class__.__name__ == "SnakePart":
+                if collidable.player is self:
+                    log_text = self.name + " crashed into their own body."
+                else:
+                    log_text = self.name + " got owned by " + collidable.player.name + "!"
+            game.log_screen.add(log_text)
         self.parts.append(head)
 
         # Check if player ate an apple
@@ -110,10 +125,8 @@ class Player(object):
         if self._lock_set_direction:
             return
 
-        if (direction == game.LEFT and self.direction != game.RIGHT) or \
-            (direction == game.RIGHT and self.direction != game.LEFT) or \
-            (direction == game.UP and self.direction != game.DOWN) or \
-            (direction == game.DOWN and self.direction != game.UP):
+        if (direction in (game.LEFT, game.RIGHT) and self.direction not in (game.LEFT, game.RIGHT)) or \
+            (direction in (game.UP, game.DOWN) and self.direction not in (game.UP, game.DOWN)):
             self.direction = direction
             self._lock_set_direction = True
 
@@ -127,7 +140,7 @@ class LogScreen(object):
     def draw(self):
         for i, text in enumerate(self.log):
             text = self.font.render(text, 1, (255, 255, 255))
-            textpos = text.get_rect(top = 30 + i*20, left = game.WINDOW_WIDTH-150)
+            textpos = text.get_rect(top = 30 + i*20, right = game.WINDOW_WIDTH-30)
             game.screen.blit(text, textpos)
 
     def add(self, text):
