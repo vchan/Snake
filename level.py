@@ -1,5 +1,5 @@
 import ConfigParser
-import os.path
+import os
 
 directions = {
     'left': 0,
@@ -10,15 +10,17 @@ directions = {
 
 class Level(object):
     def __init__(self, config_file):
-        config = ConfigParser.ConfigParser()
+        config = ConfigParser.SafeConfigParser()
         config.read(config_file)
-        self.layout = config.get('level', 'layout')
 
         self.num_apples = config.getint('snake', 'num_apples')
+        self.name = config.get('snake', 'name')
+        self.layout = config.get('level', 'layout')
 
         self.player_directions = dict((key, directions.get(value)) for key, value in config.items('player_directions'))
 
-level_shelley = Level('levels/level_shelley.ini')
-level_one = Level('levels/level1.ini')
-level_two = Level('levels/level2.ini')
-level_three= Level('levels/level3.ini')
+def get_levels():
+    levels = []
+    for level_file in os.listdir('levels'):
+        levels.append(Level(os.path.join('levels', level_file)))
+    return levels
