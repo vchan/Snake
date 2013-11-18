@@ -92,7 +92,8 @@ def main_loop():
     if selection is False:
         return
     else:
-        game.load_level(levels[selection])
+        levels[selection].parse_layout()
+        # game.load_level(levels[selection])
 
     while True:
         clock.tick(60)

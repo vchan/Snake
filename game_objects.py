@@ -12,11 +12,16 @@ class GameObject(object):
         self.rect = pygame.Rect(x*self.width, y*self.height, self.width, self.height)
         self.color = color
 
+        game.board[x][y] = self
+
     def draw(self):
         pygame.draw.rect(game.screen, self.color, self.rect)
 
     def update(self):
-        raise NotImplemented('Not implemented')
+        raise NotImplementedError('Not implemented')
+
+    def destroy(self):
+        game.board[self.x][self.y] = None
 
     def collides_with(self, collidable):
         """Returns the object it collides with, otherwise false."""
@@ -32,14 +37,38 @@ class SnakePart(GameObject):
         self.player = player
 
     def become_missile(self, x, y, direction):
-        self.x = x
-        self.y = y
+        self.destroy()
+        if direction == game.LEFT:
+            x -= 1
+        elif direction == game.RIGHT:
+            x += 1
+        elif direction == game.UP:
+            y -= 1
+        elif direction == game.DOWN:
+            y += 1
+
+        # Check if SnakePart is out of bounds
+        if x < 0:
+            x = game.BOARD_WIDTH-1
+        if x >= game.BOARD_WIDTH:
+            x = 0
+        if y < 0:
+            y = game.BOARD_HEIGHT-1
+        if y >= game.BOARD_HEIGHT:
+            y = 0
+        return Missile(self.player, x, y, direction, self.color)
+
+class Missile(GameObject):
+    def __init__(self, player, x, y, direction, color):
+        super(Missile, self).__init__(x, y, game_effects.adjust_brightness(color, 0.5))
+        self.player = player
         self.direction = direction
-        self.color = game_effects.adjust_brightness(self.color, 0.5)
         self.particle_trail = game_effects.ParticleTrail(self, self.color)
         game.effects.append(self.particle_trail)
 
     def update(self):
+        _x, _y = self.x, self.y
+
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:
@@ -62,18 +91,25 @@ class SnakePart(GameObject):
         # Keep rect object up to date
         self.rect = pygame.Rect(self.x*self.width, self.y*self.height, self.width, self.height)
 
-        # Check if missle collided with anything
-        collidable = self.collides_with(game.get_collidables(self))
-        if collidable:
-            if isinstance(collidable, Wall):
-                game.walls.remove(collidable)
-                game.effects.append(game_effects.Explosion(collidable.rect.centerx, collidable.rect.centery, collidable.color, 5, 5, 5))
-            if self in game.missiles:
+        # Update game board
+        if (self.x, self.y) != (_x, _y):
+            game.board[_x][_y] = None
+            try:
+                game.board[self.x][self.y] = self
+            except game.CollisionError, ce:
                 self.destroy_missile()
-            if collidable in game.missiles:
-                collidable.destroy_missile()
+                if isinstance(ce.collidee, Missile):
+                    ce.collidee.destroy_missile()
+                elif isinstance(ce.collidee, Wall):
+                    ce.collidee.destroy()
+                    game.effects.append(game_effects.Explosion(ce.collidee.rect.centerx, ce.collidee.rect.centery, ce.collidee.color, 5, 5, 5))
+                elif isinstance(ce.collidee, SnakePart):
+                    player = ce.collidee.player
+                    if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
+                        player.kill(self)
 
     def destroy_missile(self):
+        self.destroy()
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
         game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, 5, 4, 6))
@@ -98,9 +134,16 @@ class Wall(GameObject):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y, pygame.Color(139, 69, 0))
 
+    def destroy(self):
+        super(Wall, self).destroy()
+        game.walls.remove(self)
+
 class IndestructableWall(GameObject):
     def __init__(self, x, y):
         super(IndestructableWall, self).__init__(x, y, pygame.Color(99, 39, 20))
+
+    def destroy(self):
+        pass
 
 class Player(object):
     def __init__(self, name, x, y, direction, color):
@@ -134,37 +177,38 @@ class Player(object):
         if self.y >= game.BOARD_HEIGHT:
             self.y = 0
 
-        # Check if player collided with something
-        head = SnakePart(self, self.x, self.y, self.color)
-        collided_object = head.collides_with(game.get_collidables())
-
-        if collided_object:
-            if collided_object in game.missiles:
-                collided_object.destroy_missile()
-            self.kill(collided_object)
-
-        # Append new head after collision checks
-        self.parts.append(head)
-
-        # Check if player ate an apple
-        for apple in game.apples:
-            if apple.collides_with(head):
-                game.apples.remove(apple)
+        # Update game board
+        try:
+            head = SnakePart(self, self.x, self.y, self.color)
+            self.parts.append(head)
+        except game.CollisionError, ce:
+            if isinstance(ce.collidee, Apple):
+                game.apples.remove(ce.collidee)
+                ce.collidee.destroy()
                 game.add_apple()
                 self.grow = True
+                head = SnakePart(self, self.x, self.y, self.color)
+                self.parts.append(head)
                 game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
+            else:
+                self.kill(ce.collidee)
+                if isinstance(ce.collidee, Missile):
+                    ce.collidee.destroy_missile()
 
         # Pop the tail
         if self.grow:
             self.grow = False
         else:
-            self.parts.popleft()
+            end = self.parts.popleft()
+            end.destroy()
 
         # Reset any locks
         self._lock_set_direction = False
 
     def kill(self, collided_object=None):
         self.is_dead = True
+        for part in self.parts:
+            part.destroy()
 
         # Show explosion
         game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, 20, 5, 4))
@@ -173,7 +217,7 @@ class Player(object):
         log_text = self.name + " died!"
         if isinstance(collided_object, Wall):
             log_text = self.name + " ran into a wall."
-        elif isinstance(collided_object, SnakePart):
+        elif isinstance(collided_object, (SnakePart, Missile)):
             if collided_object.player is self:
                 log_text = self.name + " killed themselves."
             else:
@@ -188,10 +232,15 @@ class Player(object):
         """ Fires a snakepart """
         if len(self.parts) > 1:
             part = self.parts.popleft()  # Remove from the tail
-            part.become_missile(self.x, self.y, self.direction)  # Move missile to the head
-            part.update()  # Move missile in front of the head
-            game.missiles.append(part)
-            game.log_screen.add('%s fired a missile!' % self.name)
+            try:
+                missile = part.become_missile(self.x, self.y, self.direction)  # Move missile to the head
+                game.missiles.append(missile)
+                game.log_screen.add('%s fired a missile!' % self.name)
+            except game.CollisionError, ce:
+                if isinstance(ce.collidee, Missile):
+                    # Could not create missile because a missile is already there
+                    # Reattach part
+                    self.parts.appendleft(part)
 
     def set_direction(self, direction):
         if self.is_dead or self._lock_set_direction:

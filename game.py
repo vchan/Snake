@@ -37,6 +37,20 @@ if config.getboolean('snake', 'full_screen'):
         flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
 
+class CollisionError(Exception):
+    def __init__(self, collider, collidee):
+        self.collider = collider
+        self.collidee = collidee
+
+class BoardRow(list):
+    def __setitem__(self, key, value):
+        if value and self.__getitem__(key):
+            raise CollisionError(value, self.__getitem__(key))
+        super(BoardRow, self).__setitem__(key, value)
+board = []
+for i in range(BOARD_WIDTH):
+    board.append(BoardRow([None,] * BOARD_HEIGHT))
+
 def load_level(level):
     layout = level.layout.split('\n')[1:]
     for y, row in enumerate(layout):
@@ -89,12 +103,9 @@ def reset():
     load_level()
 
 def add_apple():
-    a = game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT))
-    if a.collides_with(get_collidables()):
+    try:
+        a = game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT))
+    except CollisionError, ce:
         add_apple()
     else:
         apples.append(a)
-
-
-
-
