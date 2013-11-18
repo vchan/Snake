@@ -102,13 +102,13 @@ def main_loop():
     player4_controls = [K_f, K_h, K_t, K_g]
 
     while True:
-        # Choose player menu
+        # Choose player mode
         options = ["Single player", "Two players", "Three players", "Four players"]
         selection = Menu(options).show()
         if selection is False:
             return
         else:
-            game.num_players = selection+1
+            game.num_players = selection + 1
 
         # Choose level
         levels = level.get_levels()
@@ -116,9 +116,13 @@ def main_loop():
         if selection is False:
             continue
         else:
-            game.load_level(levels[selection])
+            game.level = levels[selection]
+            game.load_level(game.level)
 
+        # Start game loop
         return_to_menu = False
+        game_status = None
+
         while not return_to_menu:
             clock.tick(60)
 
@@ -130,7 +134,11 @@ def main_loop():
                 
                 if event.type == KEYDOWN:
                     if event.key == K_SPACE:
-                         game.players[0].grow = True
+                        game.players[0].grow = True
+                    elif event.key == K_RETURN and game_status == "win":
+                        game.load_level(game.level)
+                        game_status = None
+                        continue
                     elif event.key in player1_controls:
                         game.players[0].set_direction(player1_controls.index(event.key))
                     elif event.key in player2_controls and game.num_players > 1:
@@ -149,6 +157,11 @@ def main_loop():
                 frame_count += 1
             else:
                 game.update()
+                # Check for the win condition
+                alive_players = filter(lambda p: not p.is_dead, game.players)
+                if game.num_players > 1 and len(alive_players) == 1:
+                    game_status = "win"
+                    winner = alive_players[0]
                 frame_count = 0
 
             # Draw the screen
@@ -156,6 +169,18 @@ def main_loop():
             game.draw()
             for effect in game.effects:
                 effect.draw()
+
+            # Draw win
+            if game_status == "win":
+                text = pygame.font.SysFont("impact", 100).render(winner.name + " wins!", 1, pygame.Color(255, 255, 255))
+                text_pos = text.get_rect(centerx = game.WINDOW_WIDTH/2, centery = game.WINDOW_HEIGHT/2 - 50)
+                game.screen.blit(text, text_pos)
+
+                text = pygame.font.SysFont("verdana", 15).render("Press [ENTER] to play again, or [ESC] to return to the main menu.", 1, pygame.Color(255, 255, 255))
+                text_pos = text.get_rect(centerx = game.WINDOW_WIDTH/2, centery = game.WINDOW_HEIGHT/2 + 40)
+                game.screen.blit(text, text_pos)
+
+            # Display!
             pygame.display.flip()
 
 if __name__ == '__main__':

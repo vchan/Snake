@@ -13,7 +13,8 @@ CELL_WIDTH = WINDOW_WIDTH / BOARD_WIDTH
 CELL_HEIGHT = WINDOW_HEIGHT / BOARD_HEIGHT
 LEFT, RIGHT, UP, DOWN = range(4)
 
-num_players = 1
+num_players = None
+level = None
 player_colors = {
     '1': pygame.Color(0, 255, 0),
     '2': pygame.Color(0, 0, 255),
@@ -103,7 +104,5 @@ def add_apple():
         add_apple()
     else:
         apples.append(a)
-
-
 
 
