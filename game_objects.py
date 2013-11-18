@@ -23,14 +23,6 @@ class GameObject(object):
     def destroy(self):
         game.board[self.x][self.y] = None
 
-    def collides_with(self, collidable):
-        """Returns the object it collides with, otherwise false."""
-        if isinstance(collidable, list):
-            index = self.rect.collidelist([c.rect for c in collidable])
-            return False if index == -1 else collidable[index]
-        else:
-            return self.rect.colliderect(collidable.rect)
-
 class SnakePart(GameObject):
     def __init__(self, player, x, y, color):
         super(SnakePart, self).__init__(x, y, color)
@@ -93,11 +85,11 @@ class Missile(GameObject):
 
         # Update game board
         if (self.x, self.y) != (_x, _y):
-            game.board[_x][_y] = None
+            if game.board[_x][_y] == self:
+                game.board[_x][_y] = None
             try:
                 game.board[self.x][self.y] = self
             except game.CollisionError, ce:
-                self.destroy_missile()
                 if isinstance(ce.collidee, Missile):
                     ce.collidee.destroy_missile()
                 elif isinstance(ce.collidee, Wall):
@@ -107,6 +99,9 @@ class Missile(GameObject):
                     player = ce.collidee.player
                     if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
                         player.kill(self)
+                elif isinstance(ce.collidee, Apple):
+                    return
+                self.destroy_missile()
 
     def destroy_missile(self):
         self.destroy()
