@@ -98,6 +98,10 @@ class Wall(GameObject):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y, pygame.Color(139, 69, 0))
 
+class IndestructableWall(GameObject):
+    def __init__(self, x, y):
+        super(IndestructableWall, self).__init__(x, y, pygame.Color(99, 39, 20))
+
 class Player(object):
     def __init__(self, name, x, y, direction, color):
         self.name = name
@@ -184,12 +188,12 @@ class Player(object):
         """ Fires a snakepart """
         if len(self.parts) > 1:
             part = self.parts.popleft()  # Remove from the tail
-            part.become_missile(self.x, self.y, self.direction)  # Move missle to the head
-            part.update()  # Move missle in front of the head
+            part.become_missile(self.x, self.y, self.direction)  # Move missile to the head
+            part.update()  # Move missile in front of the head
             game.missiles.append(part)
             game.log_screen.add('%s fired a missile!' % self.name)
 
-    def set_direction(self, direction):        
+    def set_direction(self, direction):
         if self.is_dead or self._lock_set_direction:
             return
 
