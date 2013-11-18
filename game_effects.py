@@ -39,6 +39,8 @@ class FadingText(object):
 
     def draw(self):
         text = self.font.render(self.text, 1, self.color)
+        # text.convert_alpha()
+        # text.set_alpha(50)
         text_pos = text.get_rect(centerx = self.x, centery = self.y)
         game.screen.blit(text, text_pos)
 
