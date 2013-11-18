@@ -78,7 +78,7 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
-    # Choose player mode
+    # Choose player menu
     options = ["Single player", "Two players", "Three players", "Four players"]
     selection = Menu(options).show()
     if selection is False:
@@ -87,7 +87,12 @@ def main_loop():
         game.num_players = selection+1
 
     # Choose level
-    game.load_level(level.level_three)
+    levels = level.get_levels()
+    selection = Menu([lvl.name for lvl in levels]).show()
+    if selection is False:
+        return
+    else:
+        game.load_level(levels[selection])
 
     while True:
         clock.tick(60)
