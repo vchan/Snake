@@ -63,7 +63,6 @@ class Menu():
             pygame.display.flip()
 
 def main_loop():
-    game_level = level.level_one
     pygame.init()
     pygame.display.set_caption("Jason's Snake Game")
     clock = pygame.time.Clock()
@@ -79,13 +78,16 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
-    game.load_level(game_level)
-
-    # Display start menu
+    # Choose player mode
     options = ["Single player", "Two players", "Three players", "Four players"]
     selection = Menu(options).show()
     if selection is False:
         return
+    else:
+        game.num_players = selection+1
+
+    # Choose level
+    game.load_level(level.level_three)
 
     while True:
         clock.tick(60)
@@ -101,11 +103,11 @@ def main_loop():
                      game.players[0].grow = True
                 elif event.key in player1_controls:
                     game.players[0].set_direction(player1_controls.index(event.key))
-                elif event.key in player2_controls and game_level.num_players > 1:
+                elif event.key in player2_controls and game.num_players > 1:
                     game.players[1].set_direction(player2_controls.index(event.key))
-                elif event.key in player3_controls and game_level.num_players > 2:
+                elif event.key in player3_controls and game.num_players > 2:
                     game.players[2].set_direction(player3_controls.index(event.key))
-                elif event.key in player4_controls and game_level.num_players > 3:
+                elif event.key in player4_controls and game.num_players > 3:
                     game.players[3].set_direction(player4_controls.index(event.key))
 
         # Update effects

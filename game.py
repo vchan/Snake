@@ -19,6 +19,7 @@ walls = []
 missiles = []
 effects = []
 
+num_players = 1
 log_screen = game_objects.LogScreen()
 
 player_colors = {
@@ -35,7 +36,6 @@ flags = 0
 if config.getboolean('snake', 'full_screen'):
         flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
-num_players = config.getint('snake', 'num_players')
 
 def load_level(level):
     layout = level.layout.split('\n')[1:]
