@@ -136,7 +136,7 @@ class Player(object):
 
         if collided_object:
             if collided_object in game.missiles:
-                collided_object.destroy_missle()
+                collided_object.destroy_missile()
             self.kill(collided_object)
 
         # Append new head after collision checks
@@ -184,12 +184,12 @@ class Player(object):
         """ Fires a snakepart """
         if len(self.parts) > 1:
             part = self.parts.popleft()  # Remove from the tail
-            part.become_missile(self.x, self.y, self.direction)  # Move missle to the head
-            part.update()  # Move missle in front of the head
+            part.become_missile(self.x, self.y, self.direction)  # Move missile to the head
+            part.update()  # Move missile in front of the head
             game.missiles.append(part)
             game.log_screen.add('%s fired a missile!' % self.name)
 
-    def set_direction(self, direction):        
+    def set_direction(self, direction):
         if self.is_dead or self._lock_set_direction:
             return
 
