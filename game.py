@@ -91,7 +91,6 @@ def add_apple():
         add_apple()
     else:
         apples.append(a)
-        # effects.append(game_effects.Portal(a.rect.centerx, a.rect.centery, a.color))
 
 
 

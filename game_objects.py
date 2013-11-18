@@ -136,7 +136,7 @@ class Player(object):
 
         if collided_object:
             if collided_object in game.missiles:
-                collided_object.destroy_missle()
+                collided_object.destroy_missile()
             self.kill(collided_object)
 
         # Append new head after collision checks
