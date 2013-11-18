@@ -152,6 +152,7 @@ class Player(object):
                 game.apples.remove(apple)
                 game.add_apple()
                 self.grow = True
+                # game.effects.append(game_effects.FadingText(str(len(self.parts)), head.rect.centerx, head.rect.centery, pygame.Color(255, 0, 0)))
                 game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
 
         # Pop the tail

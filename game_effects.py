@@ -28,6 +28,27 @@ def adjust_brightness(color, multiplier):
             rgb[i] = 0
     return pygame.Color(rgb[0], rgb[1], rgb[2], color.a)
 
+class FadingText(object):
+    def __init__(self, text, x, y, color):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.color = clone_color(color)
+        self.font = pygame.font.SysFont("georgia", 15, bold=True)
+        self.fade_speed = 2
+
+    def draw(self):
+        text = self.font.render(self.text, 1, self.color)
+        text_pos = text.get_rect(centerx = self.x, centery = self.y)
+        game.screen.blit(text, text_pos)
+
+    def update(self):
+        if self.color.a < self.fade_speed:
+            game.effects.remove(self)
+        else:
+            self.color.a -= self.fade_speed
+
+
 class Explosion(object):
     def __init__(self, x, y, color, num_particles=20, particle_size=3, fade_speed=4, particle_type="circle"):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
