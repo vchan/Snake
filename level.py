@@ -14,7 +14,6 @@ class Level(object):
         config.read(config_file)
         self.layout = config.get('level', 'layout')
 
-        self.num_players = config.getint('snake', 'num_players')
         self.num_apples = config.getint('snake', 'num_apples')
 
         self.player_directions = dict((key, directions.get(value)) for key, value in config.items('player_directions'))
@@ -22,3 +21,4 @@ class Level(object):
 level_shelley = Level('levels/level_shelley.ini')
 level_one = Level('levels/level1.ini')
 level_two = Level('levels/level2.ini')
+level_three= Level('levels/level3.ini')

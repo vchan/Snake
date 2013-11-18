@@ -8,7 +8,7 @@ import game_objects
 import level
 
 def main_loop():
-    game_level = level.level_two
+    game_level = level.level_three
     pygame.init()
     pygame.display.set_caption("Jason's Snake Game")
     clock = pygame.time.Clock()

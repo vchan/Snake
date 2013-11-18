@@ -35,6 +35,7 @@ flags = 0
 if config.getboolean('snake', 'full_screen'):
         flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
+num_players = config.getint('snake', 'num_players')
 
 def load_level(level):
     layout = level.layout.split('\n')[1:]
@@ -42,8 +43,10 @@ def load_level(level):
         for x, column in enumerate(row):
             if column == 'W':
                 walls.append(game_objects.Wall(x, y))
+            if column == 'I':
+                walls.append(game_objects.IndestructableWall(x, y))
             elif column in ('1', '2', '3', '4'):
-                if int(column) <= level.num_players:
+                if int(column) <= num_players:
                     players.append(game_objects.Player('Player %s' % column, x, y,
                         level.player_directions[column], player_colors[column]))
 

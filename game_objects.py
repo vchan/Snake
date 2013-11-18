@@ -98,6 +98,10 @@ class Wall(GameObject):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y, pygame.Color(139, 69, 0))
 
+class IndestructableWall(GameObject):
+    def __init__(self, x, y):
+        super(IndestructableWall, self).__init__(x, y, pygame.Color(99, 39, 20))
+
 class Player(object):
     def __init__(self, name, x, y, direction, color):
         self.name = name
