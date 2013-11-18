@@ -191,7 +191,6 @@ class Player(object):
             part.become_missile(self.x, self.y, self.direction)  # Move missile to the head
             part.update()  # Move missile in front of the head
             game.missiles.append(part)
-            game.log_screen.add('%s fired a missile!' % self.name)
 
     def set_direction(self, direction):
         if self.is_dead or self._lock_set_direction:

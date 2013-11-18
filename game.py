@@ -13,15 +13,7 @@ CELL_WIDTH = WINDOW_WIDTH / BOARD_WIDTH
 CELL_HEIGHT = WINDOW_HEIGHT / BOARD_HEIGHT
 LEFT, RIGHT, UP, DOWN = range(4)
 
-players = []
-apples = []
-walls = []
-missiles = []
-effects = []
-
 num_players = 1
-log_screen = game_objects.LogScreen()
-
 player_colors = {
     '1': pygame.Color(0, 255, 0),
     '2': pygame.Color(0, 0, 255),
@@ -29,15 +21,25 @@ player_colors = {
     '4': pygame.Color(0, 128, 128),
 }
 
+players = []
+apples = []
+walls = []
+missiles = []
+effects = []
+log_screen = game_objects.LogScreen()
+
+# Load config variables
 config = ConfigParser.SafeConfigParser()
 config.read('snake.ini')
 config.read('local.ini')
 flags = 0
 if config.getboolean('snake', 'full_screen'):
-        flags |= pygame.FULLSCREEN
+    flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
 
+
 def load_level(level):
+    reset()
     layout = level.layout.split('\n')[1:]
     for y, row in enumerate(layout):
         for x, column in enumerate(row):
@@ -86,7 +88,14 @@ def draw():
     log_screen.draw()
 
 def reset():
-    load_level()
+    global players, apples, walls, missiles, effects, log_screen
+
+    players = []
+    apples = []
+    walls = []
+    missiles = []
+    effects = []
+    log_screen = game_objects.LogScreen()
 
 def add_apple():
     a = game_objects.Apple(randrange(BOARD_WIDTH), randrange(BOARD_HEIGHT))
