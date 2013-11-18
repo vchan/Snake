@@ -20,7 +20,4 @@ class Level(object):
         self.player_directions = dict((key, directions.get(value)) for key, value in config.items('player_directions'))
 
 def get_levels():
-    levels = []
-    for level_file in os.listdir('levels'):
-        levels.append(Level(os.path.join('levels', level_file)))
-    return levels
+    return [Level(os.path.join('levels', level_file)) for level_file in os.listdir('levels')]
