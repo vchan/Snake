@@ -104,7 +104,6 @@ class Missile(GameObject):
                 self.destroy_missile()
 
     def destroy_missile(self):
-        self.destroy()
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
         game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, max_speed=15, num_particles=5, particle_size=4, fade_speed=10))
