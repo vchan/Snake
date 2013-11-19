@@ -67,7 +67,7 @@ class SnakePart(GameObject):
         if collidable:
             if isinstance(collidable, Wall):
                 game.walls.remove(collidable)
-                game.effects.append(game_effects.Explosion(collidable.rect.centerx, collidable.rect.centery, collidable.color, 5, 5, 5))
+                game.effects.append(game_effects.Explosion(collidable.rect.centerx, collidable.rect.centery, collidable.color, max_speed=6, num_particles=5, particle_size=5, fade_speed=12))
             if self in game.missiles:
                 self.destroy_missile()
             if collidable in game.missiles:
@@ -76,20 +76,18 @@ class SnakePart(GameObject):
     def destroy_missile(self):
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
-        game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, 5, 4, 6))
+        game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, max_speed=15, num_particles=5, particle_size=4, fade_speed=10))
 
 class Apple(GameObject):
     def __init__(self, x, y):
         super(Apple, self).__init__(x, y, pygame.Color(255, 0, 0))
-        self.color_change = 30
+        self.color_change = 5
 
     def update(self):
-        if self.color.g > 200:
-            self.color_change = -30
-        elif self.color.g <= 0:
-            self.color_change = 30
         self.color.g += self.color_change
-
+        if self.color.g > 200 or self.color.g == 0:
+            self.color_change *= -1
+        
     def draw(self):
         radius = int(self.rect.width/2*1.414)  # Expand the diameter to the length of the diagonal
         pygame.draw.circle(game.screen, self.color, self.rect.center, radius)
@@ -113,8 +111,17 @@ class Player(object):
         self.parts.append(SnakePart(self, self.x, self.y, color))
         self.grow = False
         self.is_dead = False
+        self.frames_until_update_position = 3
+        self.frame_count = 1
 
     def update(self):
+        if self.frame_count < self.frames_until_update_position:
+            self.frame_count += 1
+        else:
+            self.update_position()
+            self.frame_count = 1
+
+    def update_position(self):
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:
@@ -168,7 +175,7 @@ class Player(object):
         self.is_dead = True
 
         # Show explosion
-        game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, 20, 5, 4))
+        game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, max_speed=22, num_particles=20, particle_size=5, fade_speed=6))
 
         # Log it!
         log_text = self.name + " died!"

@@ -33,11 +33,15 @@ log_screen = game_objects.LogScreen()
 config = ConfigParser.SafeConfigParser()
 config.read('snake.ini')
 config.read('local.ini')
+
+# Set frame rate
+frames_per_second = config.getint('snake', 'frames_per_second')
+
+# Set full screen mode
 flags = 0
 if config.getboolean('snake', 'full_screen'):
     flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
-
 
 def load_level(level):
     reset()

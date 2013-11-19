@@ -90,9 +90,6 @@ def main_loop():
     pygame.display.set_caption("Battle Snake 3000")
     clock = pygame.time.Clock()
 
-    frames_until_update = 3
-    frame_count = 0
-
     background = pygame.Surface(game.screen.get_size()).convert()
     background.fill(pygame.Color(0, 0, 0))
 
@@ -124,7 +121,7 @@ def main_loop():
         game_status = None
 
         while not return_to_menu:
-            clock.tick(60)
+            clock.tick(game.frames_per_second)
 
             # Get input
             for event in pygame.event.get():
@@ -152,17 +149,14 @@ def main_loop():
             for effect in game.effects:
                 effect.update()
 
-            # Update game - we update less often than we draw to slow down the frame rate
-            if frame_count < frames_until_update:
-                frame_count += 1
-            else:
-                game.update()
-                # Check for the win condition
-                alive_players = filter(lambda p: not p.is_dead, game.players)
-                if game.num_players > 1 and len(alive_players) == 1:
-                    game_status = "win"
-                    winner = alive_players[0]
-                frame_count = 0
+            # Update game
+            game.update()
+
+            # Check for the win condition
+            alive_players = filter(lambda p: not p.is_dead, game.players)
+            if game.num_players > 1 and len(alive_players) == 1:
+                game_status = "win"
+                winner = alive_players[0]
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
