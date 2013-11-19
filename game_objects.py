@@ -154,6 +154,9 @@ class Player(object):
         self.frame_count = 1
         self._lock_set_direction = False
         self.is_invincible = False
+        self.is_invisible = False
+        self.invincible_frame_count = 0
+        # self.original_color = game_effects.clone_color(color)
         # self.swallowed_apples = []
 
     def respawn(self):
@@ -175,6 +178,12 @@ class Player(object):
         else:
             self.update_position()
             self.frame_count = 1
+
+        if self.is_invincible:
+            self.invincible_frame_count += 1
+            if self.invincible_frame_count == 4:
+                self.invincible_frame_count = 0
+                self.is_invisible = not self.is_invisible
 
         # if self.swallowed_apples:
         #     self.swallowed_apples = filter(lambda x: x > 0, map(lambda x: x-1, self.swallowed_apples))
@@ -268,6 +277,9 @@ class Player(object):
         self.respawn()
 
     def draw(self):
+        if self.is_invincible and self.is_invisible:
+            return
+
         for part in self.parts:
             part.draw()
 
