@@ -119,7 +119,7 @@ class Apple(GameObject):
             self.color_change *= -1
 
     def draw(self):
-        radius = int(self.rect.width/2*1.414)  # Expand the diameter to the length of the diagonal
+        radius = int(self.rect.width/2+1)  # Expand the diameter to the length of the diagonal
         pygame.draw.circle(game.screen, self.color, self.rect.center, radius)
 
 class Wall(GameObject):

@@ -25,15 +25,15 @@ class Menu():
         menu_item_height = self.font.get_height() + self.spacing
         # menu_height = menu_item_height * len(self.options)
         # menu_top = (game.WINDOW_HEIGHT - menu_height) / 2
-        menu_top = 250
+        menu_top = 300
 
         title_text = "Battle Snake 3000"
         title_color = pygame.Color(0, 255, 0)
         title_font = pygame.font.SysFont("impact", 70)
-        title_top = 60
+        title_top = 100
         subtitle_font = pygame.font.SysFont("georgia", 15)
         subtitle_text = "By Vincent and Jason"
-        subtitle_top = 150
+        subtitle_top = 190
 
         option_selected = 0
 
@@ -163,6 +163,15 @@ def main_loop():
             game.draw()
             for effect in game.effects:
                 effect.draw()
+
+            # Draw scoreboard
+            score_icon_size = 30
+            score_width = 150
+            score_x = game.WINDOW_WIDTH/2 - game.num_players*score_width/2
+            score_y = game.WINDOW_HEIGHT - game.SCOREBOARD_HEIGHT + (game.SCOREBOARD_HEIGHT-score_icon_size)/2
+            for i, player in enumerate(game.players):
+                rect = pygame.Rect(score_x + i*score_width, score_y, score_icon_size, score_icon_size)
+                pygame.draw.rect(game.screen, player.color, rect)
 
             # Draw win
             if game_status == "win":
