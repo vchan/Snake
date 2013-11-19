@@ -81,7 +81,7 @@ class SnakePart(GameObject):
 class Apple(GameObject):
     def __init__(self, x, y):
         super(Apple, self).__init__(x, y, pygame.Color(255, 0, 0))
-        self.color_change = 5
+        self.color_change = 4
 
     def update(self):
         self.color.g += self.color_change
