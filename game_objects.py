@@ -151,21 +151,20 @@ class Player(object):
         self.frames_until_update_position = 3
         self.frame_count = 1
         self._lock_set_direction = False
-        self.swallowed_apples = []
+        # self.swallowed_apples = []
 
     def update(self):
         if self.frame_count < self.frames_until_update_position:
             self.frame_count += 1
-            # Update swallow effect
         else:
             self.update_position()
             self.frame_count = 1
 
-        if self.swallowed_apples:
-            self.swallowed_apples = filter(lambda x: x > 0, map(lambda x: x-1, self.swallowed_apples))
+        # if self.swallowed_apples:
+        #     self.swallowed_apples = filter(lambda x: x > 0, map(lambda x: x-1, self.swallowed_apples))
 
-    def add_swallow_effect(self):
-        self.swallowed_apples.append(len(self.parts)-1)
+    # def add_swallow_effect(self):
+    #     self.swallowed_apples.append(len(self.parts)-1)
 
     def update_position(self):
         if self.direction == game.LEFT:
@@ -197,7 +196,7 @@ class Player(object):
                 ce.collidee.remove_from_board()
                 game.add_apple()
                 self.grow = True
-                self.add_swallow_effect()
+                # self.add_swallow_effect()
                 head = SnakePart(self, self.x, self.y, self.color)
                 self.parts.append(head)
                 game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
