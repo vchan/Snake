@@ -1,4 +1,3 @@
-from collections import deque
 import pygame
 import game
 import random
@@ -28,13 +27,36 @@ def adjust_brightness(color, multiplier):
             rgb[i] = 0
     return pygame.Color(rgb[0], rgb[1], rgb[2], color.a)
 
+class FadingText(object):
+    def __init__(self, text, x, y, color):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.color = clone_color(color)
+        self.font = pygame.font.SysFont("georgia", 15, bold=True)
+        self.fade_speed = 2
+
+    def draw(self):
+        text = self.font.render(self.text, 1, self.color)
+        # text.convert_alpha()
+        # text.set_alpha(50)
+        text_pos = text.get_rect(centerx = self.x, centery = self.y)
+        game.screen.blit(text, text_pos)
+
+    def update(self):
+        if self.color.a < self.fade_speed:
+            game.effects.remove(self)
+        else:
+            self.color.a -= self.fade_speed
+
+
 class Explosion(object):
-    def __init__(self, x, y, color, num_particles=20, particle_size=3, fade_speed=4, particle_type="circle"):
+    def __init__(self, x, y, color, max_speed=15, num_particles=20, particle_size=3, fade_speed=6, particle_type="circle"):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
         self.num_particles = num_particles        
         self.particle_size = particle_size
         self.particle_type = particle_type
-        self.max_speed = 10
+        self.max_speed = max_speed
         self.x = x
         self.y = y
         self.color = clone_color(color)
@@ -64,25 +86,36 @@ class Explosion(object):
 class ParticleTrail(object):
     def __init__(self, followed_object, color):
         self.followed_object = followed_object
-        self.particles = deque()
-        self.num_particles = 20
         self.color = clone_color(color)
-        self.radius = 2
-        self.particle_speed = 1
-
+        self.trail_density = 1
+        self.particles = []
+        self.particle_radius = 2
+        self.particle_speed = 2
+        self.fade_speed = 10
 
     def draw(self):
         for particle in self.particles:
-            draw_circle(game.screen, self.color, (particle[0], particle[1]), self.radius, 0)
+            draw_circle(game.screen, particle['color'], (particle['x'], particle['y']), self.particle_radius, 0)
 
     def update(self):
-        self.particles.append([self.followed_object.rect.centerx, self.followed_object.rect.centery, random.uniform(-self.particle_speed, self.particle_speed), random.uniform(-self.particle_speed, self.particle_speed)])
-        if len(self.particles) > self.num_particles:
-            self.particles.popleft()
+        for i in range(self.trail_density):
+            self.particles.append({
+                "x": self.followed_object.rect.centerx, 
+                "y": self.followed_object.rect.centery, 
+                "vx": random.uniform(-self.particle_speed, self.particle_speed), 
+                "vy": random.uniform(-self.particle_speed, self.particle_speed), 
+                "color": clone_color(self.color)
+                })
 
         for particle in self.particles:
-            particle[0] += particle[2]
-            particle[1] += particle[3]
+            particle['x'] += particle['vx']
+            particle['y'] += particle['vy']
+
+            if particle['color'].a < self.fade_speed:
+                self.particles.remove(particle)
+            else:
+                particle['color'].a -= self.fade_speed
+
 
 class Portal(object):
     def __init__(self, x, y, color):
