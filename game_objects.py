@@ -151,6 +151,7 @@ class Player(object):
         self.is_dead = False
         self.frames_until_update_position = 3
         self.frame_count = 1
+        self._lock_set_direction = False
 
     def update(self):
         if self.frame_count < self.frames_until_update_position:

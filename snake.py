@@ -15,7 +15,7 @@ class Menu():
         self.selector_color = pygame.Color(255, 255, 255)
         self.selector_padding = 20
         self.spacing = spacing
-        self.fps = 10
+        self.frames_per_second = 10
 
     def show(self):
         clock = pygame.time.Clock()
@@ -38,7 +38,7 @@ class Menu():
         option_selected = 0
 
         while True:
-            clock.tick(self.fps)
+            clock.tick(self.frames_per_second)
 
             for event in pygame.event.get():
                 if event.type == QUIT:
