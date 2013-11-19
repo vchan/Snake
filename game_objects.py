@@ -57,8 +57,11 @@ class Missile(GameObject):
         self.direction = direction
         self.particle_trail = game_effects.ParticleTrail(self, self.color)
         game.effects.append(self.particle_trail)
+        self.is_destroyed = False
 
     def update(self):
+        if self.is_destroyed:
+            return
         _x, _y = self.x, self.y
 
         if self.direction == game.LEFT:
@@ -104,6 +107,7 @@ class Missile(GameObject):
             self.cleanup()
 
     def cleanup(self):
+        self.is_destroyed = True
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
         game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, max_speed=15, num_particles=5, particle_size=4, fade_speed=10))
