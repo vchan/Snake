@@ -27,6 +27,7 @@ class Level(object):
 
         self.num_apples = config.getint('snake', 'num_apples')
         self.name = config.get('snake', 'name')
+        self.kills_to_win = config.getint('snake', 'kills_to_win')
         self.layout = config.get('level', 'layout')
 
         self.player_directions = dict((key, directions.get(value)) for key, value in config.items('player_directions'))

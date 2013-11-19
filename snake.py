@@ -152,12 +152,6 @@ def main_loop():
             # Update game
             game.update()
 
-            # Check for the win condition
-            alive_players = filter(lambda p: not p.is_dead, game.players)
-            if game.num_players > 1 and len(alive_players) == 1:
-                game_status = "win"
-                winner = alive_players[0]
-
             # Draw the screen
             game.screen.blit(background, (0, 0))
             game.draw()
@@ -171,11 +165,20 @@ def main_loop():
             score_y = game.WINDOW_HEIGHT - game.SCOREBOARD_HEIGHT + (game.SCOREBOARD_HEIGHT-score_icon_size)/2
             for i, player in enumerate(game.players):
                 rect = pygame.Rect(score_x + i*score_width, score_y, score_icon_size, score_icon_size)
+                score = pygame.font.SysFont('impact', 30).render(str(player.kills), 1, pygame.Color(255, 255, 255))
+                score_pos = score.get_rect(centerx=score_x + i*score_width + 50,
+                        centery=score_y + 15)
+                game.screen.blit(score, score_pos)
                 pygame.draw.rect(game.screen, player.color, rect)
 
-            # Draw win
-            if game_status == "win":
-                text = pygame.font.SysFont("impact", 100).render(winner.name + " wins!", 1, pygame.Color(255, 255, 255))
+            # Check for the win condition
+            winners = filter(lambda p: p.kills >= game.level.kills_to_win, game.players)
+            if winners:
+                game_status = 'win'
+                if len(winners) > 1:
+                    text = pygame.font.SysFont("impact", 100).render("Draw!", 1, pygame.Color(255, 255, 255))
+                else:
+                    text = pygame.font.SysFont("impact", 100).render(winners[0].name + " wins!", 1, pygame.Color(255, 255, 255))
                 text_pos = text.get_rect(centerx = game.WINDOW_WIDTH/2, centery = game.WINDOW_HEIGHT/2 - 50)
                 game.screen.blit(text, text_pos)
 
