@@ -156,7 +156,7 @@ class Player(object):
         self.is_invincible = False
         self.is_invisible = False
         self.invincible_frame_count = 0
-        # self.original_color = game_effects.clone_color(color)
+        self.kills = 0
         # self.swallowed_apples = []
 
     def respawn(self):
@@ -240,6 +240,7 @@ class Player(object):
                 self.kill(ce.collidee)
                 if isinstance(ce.collidee, Missile):
                     ce.collidee.cleanup()
+                    ce.collidee.remove_from_board()
                 elif isinstance(ce.collidee, SnakePart):
                     player = ce.collidee.player
                     if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
@@ -272,6 +273,7 @@ class Player(object):
             if collidee.player is self:
                 log_text = self.name + " killed themselves."
             else:
+                collidee.player.kills += 1
                 log_text = self.name + " got killed by " + collidee.player.name + "!"
         game.log_screen.add(log_text)
         self.respawn()
