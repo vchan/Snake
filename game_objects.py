@@ -20,7 +20,7 @@ class GameObject(object):
     def update(self):
         raise NotImplementedError('Not implemented')
 
-    def destroy(self):
+    def remove_from_board(self):
         game.board[self.x][self.y] = None
 
 class SnakePart(GameObject):
@@ -29,7 +29,7 @@ class SnakePart(GameObject):
         self.player = player
 
     def become_missile(self, x, y, direction):
-        self.destroy()
+        self.remove_from_board()
         if direction == game.LEFT:
             x -= 1
         elif direction == game.RIGHT:
@@ -70,7 +70,7 @@ class Missile(GameObject):
         elif self.direction == game.DOWN:
             self.y += 1
 
-        # Check if SnakePart is out of bounds
+        # Check if Missile is out of bounds
         if self.x < 0:
             self.x = game.BOARD_WIDTH-1
         if self.x >= game.BOARD_WIDTH:
@@ -84,26 +84,26 @@ class Missile(GameObject):
         self.rect = pygame.Rect(self.x*self.width, self.y*self.height, self.width, self.height)
 
         # Update game board
-        if (self.x, self.y) != (_x, _y):
-            if game.board[_x][_y] == self:
-                game.board[_x][_y] = None
-            try:
-                game.board[self.x][self.y] = self
-            except game.CollisionError, ce:
-                if isinstance(ce.collidee, Missile):
-                    ce.collidee.destroy_missile()
-                elif isinstance(ce.collidee, Wall):
-                    ce.collidee.destroy()
-                    game.effects.append(game_effects.Explosion(ce.collidee.rect.centerx, ce.collidee.rect.centery, ce.collidee.color, max_speed=6, num_particles=5, particle_size=5, fade_speed=12))
-                elif isinstance(ce.collidee, SnakePart):
-                    player = ce.collidee.player
-                    if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
-                        player.kill(self)
-                elif isinstance(ce.collidee, Apple):
-                    return
-                self.destroy_missile()
+        if game.board[_x][_y] == self:
+            game.board[_x][_y] = None
+        try:
+            game.board[self.x][self.y] = self
+        except game.CollisionError, ce:
+            if isinstance(ce.collidee, Missile):
+                ce.collidee.cleanup()
+                ce.collidee.remove_from_board()
+            elif isinstance(ce.collidee, Wall):
+                ce.collidee.remove_from_board()
+                game.effects.append(game_effects.Explosion(ce.collidee.rect.centerx, ce.collidee.rect.centery, ce.collidee.color, max_speed=6, num_particles=5, particle_size=5, fade_speed=12))
+            elif isinstance(ce.collidee, SnakePart):
+                player = ce.collidee.player
+                if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
+                    player.kill(self)
+            elif isinstance(ce.collidee, Apple):
+                return
+            self.cleanup()
 
-    def destroy_missile(self):
+    def cleanup(self):
         game.missiles.remove(self)
         game.effects.remove(self.particle_trail)
         game.effects.append(game_effects.Explosion(self.rect.centerx, self.rect.centery, self.color, max_speed=15, num_particles=5, particle_size=4, fade_speed=10))
@@ -126,15 +126,15 @@ class Wall(GameObject):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y, pygame.Color(139, 69, 0))
 
-    def destroy(self):
-        super(Wall, self).destroy()
+    def remove_from_board(self):
+        super(Wall, self).remove_from_board()
         game.walls.remove(self)
 
 class IndestructableWall(GameObject):
     def __init__(self, x, y):
         super(IndestructableWall, self).__init__(x, y, pygame.Color(99, 39, 20))
 
-    def destroy(self):
+    def remove_from_board(self):
         pass
 
 class Player(object):
@@ -151,13 +151,21 @@ class Player(object):
         self.frames_until_update_position = 3
         self.frame_count = 1
         self._lock_set_direction = False
+        self.swallowed_apples = []
 
     def update(self):
         if self.frame_count < self.frames_until_update_position:
             self.frame_count += 1
+            # Update swallow effect
         else:
             self.update_position()
             self.frame_count = 1
+
+        if self.swallowed_apples:
+            self.swallowed_apples = filter(lambda x: x > 0, map(lambda x: x-1, self.swallowed_apples))
+
+    def add_swallow_effect(self):
+        self.swallowed_apples.append(len(self.parts)-1)
 
     def update_position(self):
         if self.direction == game.LEFT:
@@ -186,49 +194,78 @@ class Player(object):
         except game.CollisionError, ce:
             if isinstance(ce.collidee, Apple):
                 game.apples.remove(ce.collidee)
-                ce.collidee.destroy()
+                ce.collidee.remove_from_board()
                 game.add_apple()
                 self.grow = True
+                self.add_swallow_effect()
                 head = SnakePart(self, self.x, self.y, self.color)
                 self.parts.append(head)
                 game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
             else:
                 self.kill(ce.collidee)
                 if isinstance(ce.collidee, Missile):
-                    ce.collidee.destroy_missile()
+                    ce.collidee.cleanup()
+                elif isinstance(ce.collidee, SnakePart):
+                    player = ce.collidee.player
+                    if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
+                        player.kill(self.parts[0])
 
         # Pop the tail
         if self.grow:
             self.grow = False
         else:
             end = self.parts.popleft()
-            end.destroy()
+            end.remove_from_board()
 
         # Reset any locks
         self._lock_set_direction = False
 
-    def kill(self, collided_object=None):
+    def kill(self, collidee=None):
         self.is_dead = True
         for part in self.parts:
-            part.destroy()
+            part.remove_from_board()
 
         # Show explosion
         game.effects.append(game_effects.Explosion(self.parts[-1].rect.left, self.parts[-1].rect.top, self.color, max_speed=22, num_particles=20, particle_size=5, fade_speed=6))
 
         # Log it!
         log_text = self.name + " died!"
-        if isinstance(collided_object, Wall):
+        if isinstance(collidee, Wall):
             log_text = self.name + " ran into a wall."
-        elif isinstance(collided_object, (SnakePart, Missile)):
-            if collided_object.player is self:
+        elif isinstance(collidee, (SnakePart, Missile)):
+            if collidee.player is self:
                 log_text = self.name + " killed themselves."
             else:
-                log_text = self.name + " got killed by " + collided_object.player.name + "!"
+                log_text = self.name + " got killed by " + collidee.player.name + "!"
         game.log_screen.add(log_text)
 
     def draw(self):
         for part in self.parts:
             part.draw()
+
+            # Draw a rounded head
+            # if part is self.parts[-1]:
+            #     if self.direction == game.LEFT:
+            #         rect = pygame.Rect(part.rect.centerx, part.rect.y, part.rect.width/2, part.rect.height)
+            #     elif self.direction == game.RIGHT:
+            #         rect = pygame.Rect(part.rect.x, part.rect.y, part.rect.width/2, part.rect.height)
+            #     elif self.direction == game.UP:
+            #         rect = pygame.Rect(part.rect.x, part.rect.centery, part.rect.width, part.rect.height/2)
+            #     elif self.direction == game.DOWN:
+            #         rect = pygame.Rect(part.rect.x, part.rect.y, part.rect.width, part.rect.height/2)
+            #     pygame.draw.rect(game.screen, self.color, rect)
+            #     pygame.draw.circle(game.screen, self.color, part.rect.center, part.width//2)
+
+
+        # for index in self.swallowed_apples:
+        #     bulge_height = 3
+        #     for i in range(index-(bulge_height-1), index+bulge_height):
+        #         print i
+        #         if i >= 0 and i < len(self.parts):
+        #             part = self.parts[i]
+        #             padding = bulge_height-abs(index-i)
+        #             rect = pygame.Rect(part.rect.x-padding, part.rect.y-padding, part.rect.width+padding*2, part.rect.height+padding*2)
+        #             pygame.draw.rect(game.screen, self.color, rect)
 
     def fire(self):
         """ Fires a snakepart """
