@@ -161,13 +161,12 @@ def main_loop():
             # Draw scoreboard
             score_icon_size = 30
             score_width = 150
-            score_x = game.WINDOW_WIDTH/2 - game.num_players*score_width/2
+            score_x = game.WINDOW_WIDTH/2 - game.num_players*score_width/2 + 60
             score_y = game.WINDOW_HEIGHT - game.SCOREBOARD_HEIGHT + (game.SCOREBOARD_HEIGHT-score_icon_size)/2
             for i, player in enumerate(game.players):
                 rect = pygame.Rect(score_x + i*score_width, score_y, score_icon_size, score_icon_size)
                 score = pygame.font.SysFont('impact', 30).render(str(player.kills), 1, pygame.Color(255, 255, 255))
-                score_pos = score.get_rect(centerx=score_x + i*score_width + 50,
-                        centery=score_y + 15)
+                score_pos = score.get_rect(centerx=score_x + i*score_width + 50, centery=score_y + 15)
                 game.screen.blit(score, score_pos)
                 pygame.draw.rect(game.screen, player.color, rect)
 
