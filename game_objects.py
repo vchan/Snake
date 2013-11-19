@@ -144,6 +144,8 @@ class Player(object):
         self.x = x
         self.y = y
         self.direction = direction
+        self.spawn_coordinates = (x, y)
+        self.spawn_direction = direction
         self.parts = deque()
         self.parts.append(SnakePart(self, self.x, self.y, color))
         self.grow = False
@@ -151,7 +153,21 @@ class Player(object):
         self.frames_until_update_position = 3
         self.frame_count = 1
         self._lock_set_direction = False
+        self.is_invincible = False
         # self.swallowed_apples = []
+
+    def respawn(self):
+        part = self.parts.pop()
+        part.x, part.y = self.spawn_coordinates
+        part.rect = pygame.Rect(part.x*part.width, part.y*part.height,
+                part.width, part.height)
+        self.x, self.y = self.spawn_coordinates
+        self.direction = self.spawn_direction
+        self.parts.clear()
+        self.parts.append(part)
+        self.is_dead = False
+        self.is_invincible = True
+        self._lock_set_direction = False
 
     def update(self):
         if self.frame_count < self.frames_until_update_position:
@@ -186,6 +202,17 @@ class Player(object):
         if self.y >= game.BOARD_HEIGHT:
             self.y = 0
 
+        if self.is_invincible:
+            if isinstance(game.board[self.x][self.y], Apple):
+                self.is_invincible = False
+            else:
+                head = self.parts[0]
+                head.x, head.y = self.x, self.y
+                head.rect = pygame.Rect(head.x*head.width, head.y*head.height,
+                        head.width, head.height)
+                self._lock_set_direction = False
+                return
+
         # Update game board
         try:
             head = SnakePart(self, self.x, self.y, self.color)
@@ -208,6 +235,7 @@ class Player(object):
                     player = ce.collidee.player
                     if (player.x, player.y) == (ce.collidee.x, ce.collidee.y):
                         player.kill(self.parts[0])
+                return
 
         # Pop the tail
         if self.grow:
@@ -237,6 +265,7 @@ class Player(object):
             else:
                 log_text = self.name + " got killed by " + collidee.player.name + "!"
         game.log_screen.add(log_text)
+        self.respawn()
 
     def draw(self):
         for part in self.parts:
