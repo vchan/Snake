@@ -6,6 +6,7 @@ from pygame.locals import *
 import game
 import game_objects
 import level
+import ai_jason
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -115,6 +116,13 @@ def main_loop():
         else:
             game.level = levels[selection]
             game.reset()
+
+        # Load AI if single player!
+        if game.num_players == 1:
+            game.num_players = 2
+            game.reset()
+            game.players[1].name = "Jason AI"
+            game.players[1].AI_engine = ai_jason.PlayerAI(game.players[1])
 
         # Start game loop
         return_to_menu = False

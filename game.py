@@ -102,10 +102,13 @@ def reset():
     missiles = []
     effects = []
     board = []
+    log_screen = game_objects.LogScreen()
+
     for i in range(BOARD_WIDTH):
         board.append(BoardRow([None,] * BOARD_HEIGHT))
+    
+    # Load level
     level.parse_layout()
-    log_screen = game_objects.LogScreen()
 
 def add_apple():
     try:

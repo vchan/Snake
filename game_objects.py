@@ -168,7 +168,7 @@ class Player(object):
         self.is_invisible = False
         self.invincible_frame_count = 0
         self.kills = 0
-        # self.swallowed_apples = []
+        self.AI_engine = None
 
     def respawn(self):
         part = self.parts.pop()
@@ -196,13 +196,10 @@ class Player(object):
                 self.invincible_frame_count = 0
                 self.is_invisible = not self.is_invisible
 
-        # if self.swallowed_apples:
-        #     self.swallowed_apples = filter(lambda x: x > 0, map(lambda x: x-1, self.swallowed_apples))
-
-    # def add_swallow_effect(self):
-    #     self.swallowed_apples.append(len(self.parts)-1)
-
     def update_position(self):
+        if self.AI_engine:
+            self.AI_engine.next_move()
+
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:
@@ -241,11 +238,10 @@ class Player(object):
             if isinstance(ce.collidee, Apple):
                 game.apples.remove(ce.collidee)
                 ce.collidee.remove_from_board()
-                game.add_apple()
                 self.grow = True
-                # self.add_swallow_effect()
                 head = SnakePart(self, self.x, self.y, self.color)
                 self.parts.append(head)
+                game.add_apple()
                 game.log_screen.add("%s grew to %s blocks." % (self.name, len(self.parts)))
             else:
                 self.kill(ce.collidee)
@@ -308,17 +304,6 @@ class Player(object):
             #         rect = pygame.Rect(part.rect.x, part.rect.y, part.rect.width, part.rect.height/2)
             #     pygame.draw.rect(game.screen, self.color, rect)
             #     pygame.draw.circle(game.screen, self.color, part.rect.center, part.width//2)
-
-
-        # for index in self.swallowed_apples:
-        #     bulge_height = 3
-        #     for i in range(index-(bulge_height-1), index+bulge_height):
-        #         print i
-        #         if i >= 0 and i < len(self.parts):
-        #             part = self.parts[i]
-        #             padding = bulge_height-abs(index-i)
-        #             rect = pygame.Rect(part.rect.x-padding, part.rect.y-padding, part.rect.width+padding*2, part.rect.height+padding*2)
-        #             pygame.draw.rect(game.screen, self.color, rect)
 
     def fire(self):
         """ Fires a snakepart """
