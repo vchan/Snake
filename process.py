@@ -26,6 +26,10 @@ class AIProcess(Process):
     def player(self):
         return self.data[0]['players'][self.player_index]
 
+    @property
+    def apples(self):
+        return self.data[0]['apples']
+
     def run(self):
         while not self.stop.is_set():
             self.execute()
