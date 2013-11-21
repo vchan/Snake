@@ -49,6 +49,7 @@ class JasonAI(AIProcess):
         self.current_path = None  # List of points which lead to the goal - [(x1, y1), (x2, y2), ...]
 
     def a_star_path(self, goal):
+        print "Running A*"
         start = (self.player.x, self.player.y)
 
         """
@@ -74,6 +75,8 @@ class JasonAI(AIProcess):
                     for p in path:
                         pygame.draw.rect(game.screen, pygame.Color(255, 0, 0), pygame.Rect(p[0]*game.CELL_WIDTH, p[1]*game.CELL_HEIGHT, game.CELL_WIDTH, game.CELL_HEIGHT))
                     pygame.display.flip()
+
+                print "Done running A*"
                 return path
 
             open_list.remove(current)
@@ -170,7 +173,9 @@ class JasonAI(AIProcess):
 
     def reassign_path(self):
         # Target the closest apple
+        print "Getting closest apple"
         closest_apple = self.get_closest_apple()
+        print "Got closest apple"
         self.current_goal = (closest_apple.x, closest_apple.y)
 
         # Find a path to the target
@@ -185,6 +190,8 @@ class JasonAI(AIProcess):
             print self.current_path
 
     def execute(self):
+        print "current: ", (self.player.x, self.player.y)
+
         if not self.current_path or not self.current_goal:
             self.reassign_path()
 
