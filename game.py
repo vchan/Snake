@@ -97,7 +97,7 @@ def draw():
 
     log_screen.draw()
 
-def reset():
+def init_level():
     global players, apples, walls, missiles, effects, board, log_screen
 
     players = []

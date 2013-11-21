@@ -11,8 +11,7 @@ import level
 import ai_jason
 
 from ai_vincent import VincentAI
-from ai_jason import JasonAI
-ai_classes = [VincentAI, JasonAI]
+ai_classes = [VincentAI]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -125,26 +124,29 @@ def main_loop():
             continue
         else:
             game.level = levels[selection]
-            ai_engines = []
-            # Load AI if single player
-            if game.num_players == 1 and game.use_multiprocessing:
+            
+            # If single player, add an AI player
+            if game.num_players == 1:
                 game.num_players = 2
-                ai_engines.append(ai_classes[game.ai_index])
-            game.reset()
-            shared_data[0] = {'board': game.board, 'players': game.players,
-                    'apples': game.apples,}
-            # Instantiate all AI processes and start them
-            ai_processes = [_class(player_index=i+game.num_players-1,
-                args=(shared_data, input_queue,)) for i, _class in
-                enumerate(ai_engines)]
-            map(lambda proc: proc.start(), ai_processes)
+                game.init_level()
 
-        # Load AI if single player!
-        if game.num_players == 1 and not game.use_multiprocessing:
-            game.num_players = 2
-            game.reset()
-            game.players[1].name = "Jason AI"
-            game.players[1].AI_engine = ai_jason.PlayerAI(game.players[1])
+                # Load threaded AI
+                if game.use_multiprocessing:
+                    ai_engines = []
+                    ai_processes = []
+                    if game.use_multiprocessing:
+                        ai_engines.append(ai_classes[game.ai_index])
+                        shared_data[0] = {'board': game.board, 'players': game.players,
+                                'apples': game.apples,}
+                        ai_processes = [_class(player_index=i+game.num_players-1,
+                            args=(shared_data, input_queue,)) for i, _class in
+                            enumerate(ai_engines)]
+                        map(lambda proc: proc.start(), ai_processes)
+                else:
+                    game.players[1].name = "Jason AI"
+                    game.players[1].AI_engine = ai_jason.PlayerAI(game.players[1])
+            else:
+                game.init_level()
 
         # Start game loop
         return_to_menu = False
@@ -175,7 +177,7 @@ def main_loop():
                     if event.key == K_SPACE:
                         game.players[0].grow = True
                     elif event.key == K_RETURN and game_status == "win":
-                        game.reset()
+                        game.init_level()
                         game_status = None
                         continue
                     elif event.key in player1_controls:
@@ -195,7 +197,8 @@ def main_loop():
             game.update()
 
             # Update shared board
-            shared_data[0] = {'board': game.board, 'players': game.players,
+            if game.use_multiprocessing:
+                shared_data[0] = {'board': game.board, 'players': game.players,
                     'apples': game.apples,}
 
             # Draw the screen
