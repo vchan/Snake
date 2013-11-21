@@ -5,6 +5,7 @@ from pygame.locals import *
 
 import game
 import game_objects
+from process import AIProcess
 
 enable_visualization = True
 wrap_coordinates = False
@@ -128,11 +129,15 @@ def a_star_path(start, goal):
     return False
 
 
-class PlayerAI(object):
+class JasonAI(AIProcess):
     def __init__(self, player):
         self.player = player
         self.current_goal = None  # Coordinates of where the snake is currently headed - (x, y)
         self.current_path = None  # List of points which lead to the goal - [(x1, y1), (x2, y2), ...]
+
+    def execute(self):
+        
+        pass
         
     def get_closest_apple(self):
         return min((heuristic_cost_estimate((self.player.x, self.player.y), (apple.x, apple.y)), apple) for apple in game.apples)[1]
