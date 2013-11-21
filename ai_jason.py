@@ -7,8 +7,11 @@ import game
 import game_objects
 
 enable_visualization = True
+wrap_coordinates = False
+check_for_closer_apples = False
 
 def normalize_coordinates(x, y):
+    """Wraps coordinates if they are out of bounds"""
     if x < 0:
         x += game.BOARD_WIDTH
     if y < 0:
@@ -20,21 +23,29 @@ def normalize_coordinates(x, y):
     return (x, y)
 
 def heuristic_cost_estimate(start, goal):
+    """Calculates the Manhattan distance between two coordinates"""
     x_distance = abs(start[0]-goal[0])
-    x_distance = min(x_distance, game.BOARD_WIDTH - x_distance)
-
     y_distance = abs(start[1]-goal[1])
-    y_distance = min(y_distance, game.BOARD_HEIGHT - y_distance)
+
+    if wrap_coordinates:
+        x_distance = min(x_distance, game.BOARD_WIDTH - x_distance)
+        y_distance = min(y_distance, game.BOARD_HEIGHT - y_distance)
 
     return x_distance + y_distance
 
 def extract_path(parent_nodes, current_node):
+    """Helper for a_start_path(). Traces parent_nodes backwards, returning the path to the start node."""
     if current_node not in parent_nodes:
         return [current_node]
     else:
         return extract_path(parent_nodes, parent_nodes[current_node]) + [current_node]
 
 def a_star_path(start, goal):
+    """
+    Uses the A* algorithm to find a path (list of (x,y) coordinates) from start to goal
+    http://www.policyalmanac.org/games/aStarTutorial.htm
+
+    """
     open_list = [start]
     closed_list = []
     parent_nodes = {}
@@ -64,20 +75,33 @@ def a_star_path(start, goal):
 
         # Get neighbors
         neighbors = []
-        up = normalize_coordinates(current[0], current[1]-1)
-        down = normalize_coordinates(current[0], current[1]+1)
-        left = normalize_coordinates(current[0]-1, current[1])
-        right = normalize_coordinates(current[0]+1, current[1])        
 
-        if up[1] >= 0 and (game.board[up[0]][up[1]] == None or isinstance(game.board[up[0]][up[1]], game_objects.Apple)):
+        if wrap_coordinates:
+            up = normalize_coordinates(current[0], current[1]-1)
+            down = normalize_coordinates(current[0], current[1]+1)
+            left = normalize_coordinates(current[0]-1, current[1])
+            right = normalize_coordinates(current[0]+1, current[1])
+        else:
+            up = (current[0], current[1]-1)
+            down = (current[0], current[1]+1)
+            left = (current[0]-1, current[1])
+            right = (current[0]+1, current[1])
+
+
+        if (wrap_coordinates or (not wrap_coordinates and up[1] >= 0)) and \
+            (game.board[up[0]][up[1]] == None or isinstance(game.board[up[0]][up[1]], game_objects.Apple)):
             neighbors.append(up)
-        if down[1] < game.BOARD_HEIGHT and (game.board[down[0]][down[1]] == None or isinstance(game.board[down[0]][down[1]], game_objects.Apple)):
+        if (wrap_coordinates or (not wrap_coordinates and down[1] < game.BOARD_HEIGHT)) and \
+            (game.board[down[0]][down[1]] == None or isinstance(game.board[down[0]][down[1]], game_objects.Apple)):
             neighbors.append(down)
-        if left[0] >= 0 and (game.board[left[0]][left[1]] == None or isinstance(game.board[left[0]][left[1]], game_objects.Apple)):
+        if (wrap_coordinates or (not wrap_coordinates and left[0] >= 0)) and \
+            (game.board[left[0]][left[1]] == None or isinstance(game.board[left[0]][left[1]], game_objects.Apple)):
             neighbors.append(left)
-        if right[0] < game.BOARD_WIDTH and (game.board[right[0]][right[1]] == None or isinstance(game.board[right[0]][right[1]], game_objects.Apple)):
+        if (wrap_coordinates or (not wrap_coordinates and right[0] < game.BOARD_WIDTH)) and \
+            (game.board[right[0]][right[1]] == None or isinstance(game.board[right[0]][right[1]], game_objects.Apple)):
             neighbors.append(right)
 
+        # Calculate path scores
         for neighbor in neighbors:
             if neighbor in closed_list:
                 continue
@@ -99,6 +123,8 @@ def a_star_path(start, goal):
 
         if enable_visualization:
             pygame.display.flip()
+
+    # Return false if no path was found
     return False
 
 
@@ -111,7 +137,7 @@ class PlayerAI(object):
     def get_closest_apple(self):
         return min((heuristic_cost_estimate((self.player.x, self.player.y), (apple.x, apple.y)), apple) for apple in game.apples)[1]
 
-    def get_safe_move(self):
+    def next_safe_move(self):
         directions = [game.LEFT, game.RIGHT, game.UP, game.DOWN]
         offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         objects = []
@@ -136,10 +162,10 @@ class PlayerAI(object):
             for i, obj in enumerate(objects):
                 if i != self.player.direction and (not obj or isinstance(obj, game_objects.Apple)):
                     return normalize_coordinates(self.player.x + offsets[i][0], self.player.y + offsets[i][1])
-            print "No safe move! Don't change direction."
+            print "No safe move!"
             return (self.player.x, self.player.y)
 
-    def refresh_path(self):
+    def reassign_path(self):
         # Target the closest apple
         closest_apple = self.get_closest_apple()
         self.current_goal = (closest_apple.x, closest_apple.y)
@@ -151,29 +177,31 @@ class PlayerAI(object):
             self.current_path.popleft()  # Discard current position
         else:
             print "No path found, getting safe move"
-            self.current_goal = self.get_safe_move()
+            self.current_goal = self.next_safe_move()
             self.current_path = deque([self.current_goal])
             print self.current_path
 
     def next_move(self):
         if not self.current_path or not self.current_goal:
-            print "New path"
-            self.refresh_path()
+            self.reassign_path()
 
         # Target a new apple if the current one disappears, or if a closer one appears
         apple = game.board[self.current_goal[0]][self.current_goal[1]]
         if not apple or not isinstance(apple, game_objects.Apple):
             print "Apple disappeared"
-            self.refresh_path()
-        elif apple is not self.get_closest_apple():
-            print "Found closer apple"
-            self.refresh_path()
+            self.reassign_path()
+        
+        # If a closer apple appears, go for it
+        if check_for_closer_apples:
+            if apple is not self.get_closest_apple():
+                print "Found closer apple"
+                self.reassign_path()
 
         # If something is in our way, refresh path
         object_ahead = game.board[self.current_path[0][0]][self.current_path[0][1]]
         if object_ahead and not isinstance(object_ahead, game_objects.Apple):
             print "Something's in our way"
-            self.refresh_path()
+            self.reassign_path()
 
         # Get the next position
         next_pos = self.current_path.popleft()
