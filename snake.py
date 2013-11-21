@@ -1,4 +1,6 @@
 from collections import deque
+import multiprocessing
+import Queue
 
 import pygame
 from pygame.locals import *
@@ -6,6 +8,9 @@ from pygame.locals import *
 import game
 import game_objects
 import level
+
+from ai_vincent import VincentAI
+ai_classes = [VincentAI,]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -98,6 +103,10 @@ def main_loop():
     player3_controls = [K_j, K_l, K_i, K_k]
     player4_controls = [K_f, K_h, K_t, K_g]
 
+    input_queue = multiprocessing.Queue()
+    shared_data= multiprocessing.Manager().list()
+    shared_data.append({'board': game.board,})
+
     while True:
         # Choose player mode
         options = ["Single player", "Two players", "Three players", "Four players"]
@@ -115,6 +124,10 @@ def main_loop():
         else:
             game.level = levels[selection]
             game.reset()
+            # Instantiate all AI processes and start them
+            ais = [_class(args=(shared_data, input_queue,)) for _class in
+                    ai_classes]
+            map(lambda proc: proc.start(), ais)
 
         # Start game loop
         return_to_menu = False
@@ -123,10 +136,21 @@ def main_loop():
         while not return_to_menu:
             clock.tick(game.frames_per_second)
 
+            while True:
+                # Process key presses from AI threads.
+                # Pulls values from input queue, creates pygame Events, and
+                # submits to event queue.
+                try:
+                    pygame.event.post(pygame.event.Event(KEYDOWN, {'key':
+                        input_queue.get_nowait(),}))
+                except Queue.Empty, qe:
+                    break
+
             # Get input
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                     return_to_menu = True
+                    map(lambda proc: proc.shutdown(), ais)
                     break
 
                 if event.type == KEYDOWN:
@@ -151,6 +175,9 @@ def main_loop():
 
             # Update game
             game.update()
+
+            # Update shared board
+            shared_data[0] = {'board': game.board,}
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
