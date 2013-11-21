@@ -11,7 +11,8 @@ import level
 import ai_jason
 
 from ai_vincent import VincentAI
-ai_classes = [VincentAI,]
+from ai_jason import JasonAI
+ai_classes = [VincentAI, JasonAI]
 
 class Menu():
     def __init__(self, options, spacing=50):
