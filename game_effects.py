@@ -27,6 +27,29 @@ def adjust_brightness(color, multiplier):
             rgb[i] = 0
     return pygame.Color(rgb[0], rgb[1], rgb[2], color.a)
 
+class FadingText(object):
+    def __init__(self, text, x, y, color):
+        self.text = text
+        self.x = x
+        self.y = y
+        self.color = clone_color(color)
+        self.font = pygame.font.SysFont("georgia", 15, bold=True)
+        self.fade_speed = 2
+
+    def draw(self):
+        text = self.font.render(self.text, 1, self.color)
+        # text.convert_alpha()
+        # text.set_alpha(50)
+        text_pos = text.get_rect(centerx = self.x, centery = self.y)
+        game.screen.blit(text, text_pos)
+
+    def update(self):
+        if self.color.a < self.fade_speed:
+            game.effects.remove(self)
+        else:
+            self.color.a -= self.fade_speed
+
+
 class Explosion(object):
     def __init__(self, x, y, color, max_speed=15, num_particles=20, particle_size=3, fade_speed=6, particle_type="circle"):
         self.particles = []  # Each particle holds [x, y, x_speed, y_speed]
@@ -93,60 +116,39 @@ class ParticleTrail(object):
             else:
                 particle['color'].a -= self.fade_speed
 
-# class FadingText(object):
-#     def __init__(self, text, x, y, color):
-#         self.text = text
-#         self.x = x
-#         self.y = y
-#         self.color = clone_color(color)
-#         self.font = pygame.font.SysFont("georgia", 15, bold=True)
-#         self.fade_speed = 2
 
-#     def draw(self):
-#         text = self.font.render(self.text, 1, self.color)
-#         # text.convert_alpha()
-#         # text.set_alpha(50)
-#         text_pos = text.get_rect(centerx = self.x, centery = self.y)
-#         game.screen.blit(text, text_pos)
+class Portal(object):
+    def __init__(self, x, y, color):
+        self.x = x
+        self.y = y
+        self.color = clone_color(color)
+        self.fade_speed = 10
+        self.fade_threshold = 40
+        self.ring_spacing = 30
+        self.ring_start_width = 10
+        self.rings = []
+        self.add_ring()        
 
-#     def update(self):
-#         if self.color.a < self.fade_speed:
-#             game.effects.remove(self)
-#         else:
-#             self.color.a -= self.fade_speed
+    def add_ring(self):
+        self.rings.append({'radius': self.ring_start_width, 'color': pygame.Color(self.color.r, self.color.g, self.color.b, 255)})
 
-# class Portal(object):
-#     def __init__(self, x, y, color):
-#         self.x = x
-#         self.y = y
-#         self.color = clone_color(color)
-#         self.fade_speed = 10
-#         self.fade_threshold = 40
-#         self.ring_spacing = 30
-#         self.ring_start_width = 10
-#         self.rings = []
-#         self.add_ring()        
+    def draw(self):
+        for ring in self.rings:
+            draw_circle(game.screen, ring['color'], (self.x, self.y), ring['radius'], 1)
 
-#     def add_ring(self):
-#         self.rings.append({'radius': self.ring_start_width, 'color': pygame.Color(self.color.r, self.color.g, self.color.b, 255)})
+    def update(self):
+        # Increase radius of all rings
+        for ring in self.rings:
+            ring['radius'] += 1
 
-#     def draw(self):
-#         for ring in self.rings:
-#             draw_circle(game.screen, ring['color'], (self.x, self.y), ring['radius'], 1)
+        # Create new rings emerging from the center
+        if self.rings[-1]['radius'] > self.ring_spacing:
+            self.add_ring()
 
-#     def update(self):
-#         # Increase radius of all rings
-#         for ring in self.rings:
-#             ring['radius'] += 1
-
-#         # Create new rings emerging from the center
-#         if self.rings[-1]['radius'] > self.ring_spacing:
-#             self.add_ring()
-
-#         for ring in filter(lambda r: r['radius'] > self.fade_threshold, self.rings):
-#             if ring['color'].a < self.fade_speed:
-#                 self.rings.remove(ring)
-#             else:
-#                 ring['color'].a -= self.fade_speed
+        for ring in filter(lambda r: r['radius'] > self.fade_threshold, self.rings):
+            if ring['color'].a < self.fade_speed:
+                self.rings.remove(ring)
+            else:
+                ring['color'].a -= self.fade_speed
 
 

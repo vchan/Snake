@@ -1,11 +1,10 @@
 import ConfigParser
-from random import randrange, randint
+from random import randrange
 
 import pygame
 import game_objects
 import game_effects
 
-NAME = "Battle Snake %i" % randint(3000, 3019)  # Choose a random futuristic-looking year :)
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 800
 SCOREBOARD_HEIGHT = 80
@@ -45,8 +44,6 @@ if config.getboolean('snake', 'full_screen'):
     flags |= pygame.FULLSCREEN
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
 
-ai_index = config.getint('snake', 'ai_index')
-
 class CollisionError(Exception):
     def __init__(self, collider, collidee):
         self.collider = collider
@@ -76,7 +73,7 @@ for i in range(BOARD_WIDTH):
 #                         level.player_directions[column], player_colors[column]))
 
 #     for i in range(level.num_apples):
-#         add_apple()
+#         add_apple()        
 
 def update():
     for obj in apples + missiles:
@@ -109,7 +106,7 @@ def reset():
 
     for i in range(BOARD_WIDTH):
         board.append(BoardRow([None,] * BOARD_HEIGHT))
-
+    
     # Load level
     level.parse_layout()
 

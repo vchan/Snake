@@ -33,7 +33,7 @@ class Menu():
         # menu_top = (game.WINDOW_HEIGHT - menu_height) / 2
         menu_top = 300
 
-        title_text = game.NAME
+        title_text = "Battle Snake 3000"
         title_color = pygame.Color(0, 255, 0)
         title_font = pygame.font.SysFont("impact", 70)
         title_top = 100
@@ -93,7 +93,7 @@ class Menu():
 
 def main_loop():
     pygame.init()
-    pygame.display.set_caption(game.NAME)
+    pygame.display.set_caption("Battle Snake 3000")
     clock = pygame.time.Clock()
 
     background = pygame.Surface(game.screen.get_size()).convert()
@@ -106,7 +106,7 @@ def main_loop():
 
     input_queue = multiprocessing.Queue()
     shared_data= multiprocessing.Manager().list()
-    shared_data.append({'board': game.board, 'players': game.players,})
+    shared_data.append({'board': game.board,})
 
     while True:
         # Choose player mode
@@ -124,21 +124,14 @@ def main_loop():
             continue
         else:
             game.level = levels[selection]
-            ai_engines = []
-            # Load AI if single player
-            if game.num_players == 1:
-                game.num_players = 2
-                ai_engines.append(ai_classes[game.ai_index])
             game.reset()
-            shared_data[0] = {'board': game.board, 'players': game.players,}
             # Instantiate all AI processes and start them
-            ai_processes = [_class(player_index=i+game.num_players-1,
-                args=(shared_data, input_queue,)) for i, _class in
-                enumerate(ai_engines)]
-            map(lambda proc: proc.start(), ai_processes)
+            ais = [_class(args=(shared_data, input_queue,)) for _class in
+                    ai_classes]
+            map(lambda proc: proc.start(), ais)
 
         # Load AI if single player!
-        if game.num_players == 1 and 0:
+        if game.num_players == 1:
             game.num_players = 2
             game.reset()
             game.players[1].name = "Jason AI"
@@ -165,8 +158,7 @@ def main_loop():
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                     return_to_menu = True
-                    # Shutdown all AI processes
-                    map(lambda proc: proc.shutdown(), ai_processes)
+                    map(lambda proc: proc.shutdown(), ais)
                     break
 
                 if event.type == KEYDOWN:
@@ -193,7 +185,7 @@ def main_loop():
             game.update()
 
             # Update shared board
-            shared_data[0] = {'board': game.board, 'players': game.players,}
+            shared_data[0] = {'board': game.board,}
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
