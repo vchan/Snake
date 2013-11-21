@@ -1,12 +1,14 @@
 from collections import deque
 
-# import pygame
-# from pygame.locals import *
+import pygame
+from pygame.locals import *
 
 import game
 import game_objects
 
-def normalize_board_coordinates(x, y):
+enable_visualization = True
+
+def normalize_coordinates(x, y):
     if x < 0:
         x += game.BOARD_WIDTH
     if y < 0:
@@ -18,7 +20,13 @@ def normalize_board_coordinates(x, y):
     return (x, y)
 
 def heuristic_cost_estimate(start, goal):
-    return abs(start[0] - goal[0]) + abs(start[1] - goal[1])
+    x_distance = abs(start[0]-goal[0])
+    x_distance = min(x_distance, game.BOARD_WIDTH - x_distance)
+
+    y_distance = abs(start[1]-goal[1])
+    y_distance = min(y_distance, game.BOARD_HEIGHT - y_distance)
+
+    return x_distance + y_distance
 
 def extract_path(parent_nodes, current_node):
     if current_node not in parent_nodes:
@@ -39,17 +47,27 @@ def a_star_path(start, goal):
         # Choose the lowest f score in the open list
         current = min((f_scores[node], node) for node in open_list)[1]
         if current == goal:
-            return extract_path(parent_nodes, current)
+            path = extract_path(parent_nodes, current)
+            # Draw the final path
+            if enable_visualization:
+                for p in path:
+                    pygame.draw.rect(game.screen, pygame.Color(255, 0, 0), pygame.Rect(p[0]*game.CELL_WIDTH, p[1]*game.CELL_HEIGHT, game.CELL_WIDTH, game.CELL_HEIGHT))
+                pygame.display.flip()
+            return path
 
         open_list.remove(current)
         closed_list.append(current)
 
+        # Draw the closed list
+        if enable_visualization:
+            pygame.draw.rect(game.screen, pygame.Color(0, 255, 0), pygame.Rect(current[0]*game.CELL_WIDTH, current[1]*game.CELL_HEIGHT, game.CELL_WIDTH, game.CELL_HEIGHT))
+
         # Get neighbors
         neighbors = []
-        up = (current[0], current[1]-1)
-        down = (current[0], current[1]+1)
-        left = (current[0]-1, current[1])
-        right = (current[0]+1, current[1])        
+        up = normalize_coordinates(current[0], current[1]-1)
+        down = normalize_coordinates(current[0], current[1]+1)
+        left = normalize_coordinates(current[0]-1, current[1])
+        right = normalize_coordinates(current[0]+1, current[1])        
 
         if up[1] >= 0 and (game.board[up[0]][up[1]] == None or isinstance(game.board[up[0]][up[1]], game_objects.Apple)):
             neighbors.append(up)
@@ -61,11 +79,12 @@ def a_star_path(start, goal):
             neighbors.append(right)
 
         for neighbor in neighbors:
+            if neighbor in closed_list:
+                continue
+
             g = g_scores[current] + 1
             h = heuristic_cost_estimate(neighbor, goal)
             f = g + h
-            if neighbor in closed_list and f > f_scores[neighbor]:
-                continue
 
             if neighbor not in open_list or f < f_scores[neighbor]:
                 parent_nodes[neighbor] = current
@@ -74,7 +93,12 @@ def a_star_path(start, goal):
                 f_scores[neighbor] = f
                 if neighbor not in open_list:
                     open_list.append(neighbor)
+                    # Draw the open list
+                    if enable_visualization:
+                        pygame.draw.rect(game.screen, pygame.Color(0, 255, 255), pygame.Rect(neighbor[0]*game.CELL_WIDTH, neighbor[1]*game.CELL_HEIGHT, game.CELL_WIDTH, game.CELL_HEIGHT))
 
+        if enable_visualization:
+            pygame.display.flip()
     return False
 
 
@@ -95,11 +119,11 @@ class PlayerAI(object):
 
         # Get objects surrounding the player
         for direction in directions:
-            c = normalize_board_coordinates(self.player.x + offsets[direction][0], self.player.y + offsets[direction][1])
+            c = normalize_coordinates(self.player.x + offsets[direction][0], self.player.y + offsets[direction][1])
             objects.append(game.board[c[0]][c[1]])
 
         # Check 2 steps ahead for another player's head
-        c = normalize_board_coordinates(self.player.x + 2*offsets[self.player.direction][0], self.player.y + 2*offsets[self.player.direction][1])
+        c = normalize_coordinates(self.player.x + 2*offsets[self.player.direction][0], self.player.y + 2*offsets[self.player.direction][1])
         obj = game.board[c[0]][c[1]]
         if isinstance(obj, game_objects.SnakePart) and obj is obj.player.parts[-1]:
             print "Snake head ahead!"
@@ -107,11 +131,11 @@ class PlayerAI(object):
 
         # Keep going in the same direction if its safe. Otherwise find the first safe move
         if safe and (not objects[self.player.direction] or isinstance(objects[self.player.direction], game_objects.Apple)):
-            return normalize_board_coordinates(self.player.x + offsets[self.player.direction][0], self.player.y + offsets[self.player.direction][1])
+            return normalize_coordinates(self.player.x + offsets[self.player.direction][0], self.player.y + offsets[self.player.direction][1])
         else:
             for i, obj in enumerate(objects):
                 if i != self.player.direction and (not obj or isinstance(obj, game_objects.Apple)):
-                    return normalize_board_coordinates(self.player.x + offsets[i][0], self.player.y + offsets[i][1])
+                    return normalize_coordinates(self.player.x + offsets[i][0], self.player.y + offsets[i][1])
             print "No safe move! Don't change direction."
             return (self.player.x, self.player.y)
 
@@ -129,6 +153,7 @@ class PlayerAI(object):
             print "No path found, getting safe move"
             self.current_goal = self.get_safe_move()
             self.current_path = deque([self.current_goal])
+            print self.current_path
 
     def next_move(self):
         if not self.current_path or not self.current_goal:
