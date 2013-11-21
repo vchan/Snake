@@ -33,7 +33,7 @@ class Menu():
         # menu_top = (game.WINDOW_HEIGHT - menu_height) / 2
         menu_top = 300
 
-        title_text = "Battle Snake 3000"
+        title_text = game.NAME
         title_color = pygame.Color(0, 255, 0)
         title_font = pygame.font.SysFont("impact", 70)
         title_top = 100
@@ -93,7 +93,7 @@ class Menu():
 
 def main_loop():
     pygame.init()
-    pygame.display.set_caption("Battle Snake 3000")
+    pygame.display.set_caption(game.NAME)
     clock = pygame.time.Clock()
 
     background = pygame.Surface(game.screen.get_size()).convert()

@@ -1,10 +1,11 @@
 import ConfigParser
-from random import randrange
+from random import randrange, randint
 
 import pygame
 import game_objects
 import game_effects
 
+NAME = "Battle Snake %i" % randint(3000, 3019)  # Choose a random futuristic-looking year :)
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 800
 SCOREBOARD_HEIGHT = 80
