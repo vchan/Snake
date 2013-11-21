@@ -186,7 +186,6 @@ class JasonAI(AIProcess):
 
     def execute(self):
         if not self.current_path or not self.current_goal:
-            print "New path"
             self.reassign_path()
 
         # Target a new apple if the current one disappears, or if a closer one appears
@@ -209,6 +208,8 @@ class JasonAI(AIProcess):
 
         # Get the next position
         next_pos = self.current_path.popleft()
+
+        print "current: ", (self.player.x, self.player.y), ", goal: ", self.current_goal, ", next: ", next_pos
 
         # Set player direction
         if next_pos[0] == self.player.x-1 or (self.player.x == 0 and next_pos[0] == game.BOARD_WIDTH-1):
