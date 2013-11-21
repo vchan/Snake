@@ -18,9 +18,17 @@ class AIProcess(Process):
         self.input_queue = kwargs['args'][1]
         self.stop = Event()
 
+    @property
+    def board(self):
+        return self.data[0]['board']
+
+    @property
+    def player(self):
+        return self.data[0]['players'][self.player_index]
+
     def run(self):
         while not self.stop.is_set():
-            self.execute(self.data[0]['players'][self.player_index], self.data[0]['board'])
+            self.execute()
 
     def shutdown(self):
         self.stop.set()
@@ -40,7 +48,7 @@ class AIProcess(Process):
     def press_down(self):
         self._press(player_controls[self.player_index][3])
 
-    def execute(self, player, board):
+    def execute(self):
         """ Override this method to control your snake. Use a press_* function
             to submit a key press on behalf of the player. """
         pass

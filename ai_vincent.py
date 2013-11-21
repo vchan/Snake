@@ -1,5 +1,5 @@
 from process import AIProcess
 
 class VincentAI(AIProcess):
-    def execute(self, player, board):
+    def execute(self):
         pass
