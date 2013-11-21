@@ -138,7 +138,7 @@ class JasonAI(AIProcess):
         return False
 
     def get_closest_apple(self):
-        return min((heuristic_cost_estimate((self.player.x, self.player.y), (apple.x, apple.y)), apple) for apple in game.apples)[1]
+        return min((heuristic_cost_estimate((self.player.x, self.player.y), (apple.x, apple.y)), apple) for apple in self.apples)[1]
 
     def next_safe_move(self):
         directions = [game.LEFT, game.RIGHT, game.UP, game.DOWN]
@@ -186,6 +186,7 @@ class JasonAI(AIProcess):
 
     def execute(self):
         if not self.current_path or not self.current_goal:
+            print "New path"
             self.reassign_path()
 
         # Target a new apple if the current one disappears, or if a closer one appears
