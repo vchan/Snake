@@ -1,6 +1,8 @@
 from process import AIProcess
-from pygame.locals import *
 
 class VincentAI(AIProcess):
-    def execute(self, board):
+    def execute(self):
+        pass
+
+    def calculate_apple_distance(self):
         pass

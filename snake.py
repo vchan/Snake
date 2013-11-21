@@ -11,7 +11,8 @@ import level
 import ai_jason
 
 from ai_vincent import VincentAI
-ai_classes = [VincentAI,]
+from ai_jason import JasonAI
+ai_classes = [VincentAI, JasonAI]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -33,7 +34,7 @@ class Menu():
         # menu_top = (game.WINDOW_HEIGHT - menu_height) / 2
         menu_top = 300
 
-        title_text = "Battle Snake 3000"
+        title_text = game.NAME
         title_color = pygame.Color(0, 255, 0)
         title_font = pygame.font.SysFont("impact", 70)
         title_top = 100
@@ -93,7 +94,7 @@ class Menu():
 
 def main_loop():
     pygame.init()
-    pygame.display.set_caption("Battle Snake 3000")
+    pygame.display.set_caption(game.NAME)
     clock = pygame.time.Clock()
 
     background = pygame.Surface(game.screen.get_size()).convert()
@@ -106,7 +107,7 @@ def main_loop():
 
     input_queue = multiprocessing.Queue()
     shared_data= multiprocessing.Manager().list()
-    shared_data.append({'board': game.board,})
+    shared_data.append({})
 
     while True:
         # Choose player mode
@@ -124,14 +125,22 @@ def main_loop():
             continue
         else:
             game.level = levels[selection]
+            ai_engines = []
+            # Load AI if single player
+            if game.num_players == 1:
+                game.num_players = 2
+                ai_engines.append(ai_classes[game.ai_index])
             game.reset()
+            shared_data[0] = {'board': game.board, 'players': game.players,
+                    'apples': game.apples,}
             # Instantiate all AI processes and start them
-            ais = [_class(args=(shared_data, input_queue,)) for _class in
-                    ai_classes]
-            map(lambda proc: proc.start(), ais)
+            ai_processes = [_class(player_index=i+game.num_players-1,
+                args=(shared_data, input_queue,)) for i, _class in
+                enumerate(ai_engines)]
+            map(lambda proc: proc.start(), ai_processes)
 
         # Load AI if single player!
-        if game.num_players == 1:
+        if game.num_players == 1 and 0:
             game.num_players = 2
             game.reset()
             game.players[1].name = "Jason AI"
@@ -158,7 +167,8 @@ def main_loop():
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                     return_to_menu = True
-                    map(lambda proc: proc.shutdown(), ais)
+                    # Shutdown all AI processes
+                    map(lambda proc: proc.shutdown(), ai_processes)
                     break
 
                 if event.type == KEYDOWN:
@@ -185,7 +195,8 @@ def main_loop():
             game.update()
 
             # Update shared board
-            shared_data[0] = {'board': game.board,}
+            shared_data[0] = {'board': game.board, 'players': game.players,
+                    'apples': game.apples,}
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
