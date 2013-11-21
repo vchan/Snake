@@ -144,7 +144,7 @@ def main_loop():
                         map(lambda proc: proc.start(), ai_processes)
                 else:
                     game.players[1].name = "Jason AI"
-                    game.players[1].AI_engine = ai_jason.PlayerAI(game.players[1])
+                    game.players[1].AI_engine = ai_jason.JasonAI(game.players[1])
             else:
                 game.init_level()
 
@@ -170,7 +170,8 @@ def main_loop():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
                     return_to_menu = True
                     # Shutdown all AI processes
-                    map(lambda proc: proc.shutdown(), ai_processes)
+                    if game.use_multiprocessing:
+                        map(lambda proc: proc.shutdown(), ai_processes)
                     break
 
                 if event.type == KEYDOWN:
