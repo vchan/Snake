@@ -11,8 +11,7 @@ import level
 import ai_jason
 
 from ai_vincent import VincentAI
-from ai_jason import JasonAI
-ai_classes = [VincentAI, JasonAI]
+ai_classes = [VincentAI,]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -107,7 +106,7 @@ def main_loop():
 
     input_queue = multiprocessing.Queue()
     shared_data= multiprocessing.Manager().list()
-    shared_data.append({})
+    shared_data.append({'board': game.board, 'players': game.players,})
 
     while True:
         # Choose player mode
@@ -131,8 +130,7 @@ def main_loop():
                 game.num_players = 2
                 ai_engines.append(ai_classes[game.ai_index])
             game.reset()
-            shared_data[0] = {'board': game.board, 'players': game.players,
-                    'apples': game.apples,}
+            shared_data[0] = {'board': game.board, 'players': game.players,}
             # Instantiate all AI processes and start them
             ai_processes = [_class(player_index=i+game.num_players-1,
                 args=(shared_data, input_queue,)) for i, _class in
@@ -195,8 +193,7 @@ def main_loop():
             game.update()
 
             # Update shared board
-            shared_data[0] = {'board': game.board, 'players': game.players,
-                    'apples': game.apples,}
+            shared_data[0] = {'board': game.board, 'players': game.players,}
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
