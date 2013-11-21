@@ -1,6 +1,10 @@
 from multiprocessing import Process, Event
+from ctypes import Structure, c_int, c_char
 
 from pygame.locals import *
+
+import game
+import game_objects
 
 player_controls = {
     0: [K_LEFT, K_RIGHT, K_UP, K_DOWN],
@@ -9,26 +13,53 @@ player_controls = {
     3: [K_f, K_h, K_t, K_g],
 }
 
+class GameObject(Structure):
+    _fields_ = [('x', c_int), ('y', c_int)]
+
+    def __repr__(self):
+        return '(%d, %d)' % (self.x, self.y,)
+
+class MovableGameObject(Structure):
+    _anonymous_ = ('game_object',)
+    _fields_ = [('game_object', GameObject), ('direction', c_int)]
+
+    def __repr__(self):
+        return '(%d, %d) %d' % (self.x, self.y, self.direction,)
+
+board = (c_char * game.BOARD_WIDTH) * game.BOARD_HEIGHT
+
+class Serializer(object):
+    def serialize_board(self, board, _board):
+        for y, row in enumerate(board):
+            for x, obj in enumerate(row):
+                c = ' '
+                if isinstance(obj, game_objects.Wall):
+                    c = 'W'
+                elif isinstance(obj, game_objects.IndestructableWall):
+                    c = 'I'
+                elif isinstance(obj, game_objects.Apple):
+                    c = 'A'
+                elif isinstance(obj, game_objects.SnakePart):
+                    c = str(game.players.index(obj.player) + 1)
+                elif isinstance(obj, game_objects.Missile):
+                    c = 'M'
+                _board[x][y] = c
+        return _board
+
 class AIProcess(Process):
     """ Wrapper class for a python process. """
-    def __init__(self, player_index, *args, **kwargs):
+    def __init__(self, player_index, board, players, apples, *args, **kwargs):
         super(AIProcess, self).__init__(*args, **kwargs)
         self.player_index = player_index
-        self.data = kwargs['args'][0]
-        self.input_queue = kwargs['args'][1]
+        self.input_queue = kwargs['args'][0]
+        self.board = board
+        self.apples = list(apples)
+        self._players = players
         self.stop = Event()
 
     @property
-    def board(self):
-        return self.data[0]['board']
-
-    @property
     def player(self):
-        return self.data[0]['players'][self.player_index]
-
-    @property
-    def apples(self):
-        return self.data[0]['apples']
+        return self._players[self.player_index]
 
     def run(self):
         while not self.stop.is_set():
