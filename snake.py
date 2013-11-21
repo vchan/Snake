@@ -8,6 +8,7 @@ from pygame.locals import *
 import game
 import game_objects
 import level
+import ai_jason
 
 from ai_vincent import VincentAI
 ai_classes = [VincentAI,]
@@ -128,6 +129,13 @@ def main_loop():
             ais = [_class(args=(shared_data, input_queue,)) for _class in
                     ai_classes]
             map(lambda proc: proc.start(), ais)
+
+        # Load AI if single player!
+        if game.num_players == 1:
+            game.num_players = 2
+            game.reset()
+            game.players[1].name = "Jason AI"
+            game.players[1].AI_engine = ai_jason.PlayerAI(game.players[1])
 
         # Start game loop
         return_to_menu = False
