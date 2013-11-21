@@ -46,6 +46,7 @@ if config.getboolean('snake', 'full_screen'):
 screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), flags)
 
 ai_index = config.getint('snake', 'ai_index')
+use_multiprocessing= config.getboolean('snake', 'use_multiprocessing')
 
 class CollisionError(Exception):
     def __init__(self, collider, collidee):

@@ -106,7 +106,7 @@ def main_loop():
     player4_controls = [K_f, K_h, K_t, K_g]
 
     input_queue = multiprocessing.Queue()
-    shared_data= multiprocessing.Manager().list()
+    shared_data = multiprocessing.Manager().list()
     shared_data.append({})
 
     while True:
@@ -127,7 +127,7 @@ def main_loop():
             game.level = levels[selection]
             ai_engines = []
             # Load AI if single player
-            if game.num_players == 1:
+            if game.num_players == 1 and game.use_multiprocessing:
                 game.num_players = 2
                 ai_engines.append(ai_classes[game.ai_index])
             game.reset()
@@ -140,7 +140,7 @@ def main_loop():
             map(lambda proc: proc.start(), ai_processes)
 
         # Load AI if single player!
-        if game.num_players == 1 and 0:
+        if game.num_players == 1 and not game.use_multiprocessing:
             game.num_players = 2
             game.reset()
             game.players[1].name = "Jason AI"
@@ -153,7 +153,7 @@ def main_loop():
         while not return_to_menu:
             clock.tick(game.frames_per_second)
 
-            while True:
+            while game.use_multiprocessing:
                 # Process key presses from AI threads.
                 # Pulls values from input queue, creates pygame Events, and
                 # submits to event queue.
