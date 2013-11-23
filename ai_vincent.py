@@ -1,8 +1,13 @@
 import heapq
 import time
+from collections import deque
+
+import pygame
 
 from process import AIProcess
 import game
+
+VISUALIZE = False
 
 class Node(object):
     def __init__(self, x, y):
@@ -10,6 +15,9 @@ class Node(object):
         self.f_score = 0
         self.g_score = 0
         self.h_score = 0
+        self.width = game.CELL_WIDTH
+        self.height = game.CELL_HEIGHT
+        self.rect = pygame.Rect(x*self.width, y*self.height, self.width, self.height)
 
     def __lt__(self, other):
         """ Used by heapq for maintaining the priority queue. """
@@ -34,10 +42,16 @@ class Node(object):
     def get_coordinates(self):
         return (self.x, self.y)
 
+    def draw(self, color):
+        if VISUALIZE:
+            pygame.draw.rect(game.screen, color, self.rect)
+
 class VincentAI(AIProcess):
     def __init__(self, *args, **kwargs):
         super(VincentAI, self).__init__(*args, **kwargs)
         self.update_position()
+        self.goal = None
+        self.path = None
 
     def update_position(self):
         self.last_known_position = (self.player.x, self.player.y)
@@ -47,8 +61,12 @@ class VincentAI(AIProcess):
             # Player has not moved yet. No need to do anything.
             return
         self.update_position()
-        closest_apple = self.get_closest_apple()[1]
-        next_move = self.a_star(closest_apple)[1]
+        if not self.path or self.goal != self.get_closest_apple()[1]:
+            self.goal = self.get_closest_apple()[1]
+            self.path = self.a_star(self.goal)
+            if not self.path:
+                return
+        next_move = self.path.pop()
         if next_move[0] > self.player.x and self.player.direction != game.RIGHT:
             self.press_right()
         elif next_move[0] < self.player.x and self.player.direction != game.LEFT:
@@ -87,6 +105,7 @@ class VincentAI(AIProcess):
             if current == goal:
                 return self.reconstruct_path(came_from, goal.get_coordinates())
             closed_set.add(current)
+            current.draw(pygame.Color(55, 55, 55))
 
             for neighbor in self.get_walkable_neighbors(current):
                 tentative_g_score = current.g_score + self.dist_between(current, neighbor)
@@ -102,8 +121,10 @@ class VincentAI(AIProcess):
                     neighbor.f_score = tentative_f_score
                     if neighbor not in open_heap:
                         heapq.heappush(open_heap, neighbor)
+                        neighbor.draw(pygame.Color(100, 100, 100))
+            if VISUALIZE:
+                pygame.display.flip()
         # No path found
-        raise
 
     def get_walkable_neighbors(self, node):
         """ Evaluate the node's 4 neighbors and return the walkable ones. """
@@ -132,8 +153,8 @@ class VincentAI(AIProcess):
         return self.dist_between(start, goal) * 8
 
     def reconstruct_path(self, came_from, current_node):
-        if current_node in came_from:
-            p = self.reconstruct_path(came_from, came_from[current_node])
-            return p + [current_node]
-        else:
-            return [current_node]
+        path = deque()
+        while current_node in came_from:
+            path.append(current_node)
+            current_node = came_from[current_node]
+        return path
