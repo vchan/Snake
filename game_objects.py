@@ -58,16 +58,9 @@ class Missile(GameObject):
         self.particle_trail = game_effects.ParticleTrail(self, self.color)
         game.effects.append(self.particle_trail)
         self.is_destroyed = False
-        self.lifetime = 160
 
     def update(self):
         if self.is_destroyed:
-            return
-        self.lifetime -= 1
-        if self.lifetime < 0:
-            self.is_destroyed = True
-            self.cleanup()
-            self.remove_from_board()
             return
         _x, _y = self.x, self.y
 
@@ -197,9 +190,6 @@ class Player(object):
                 self.is_invisible = not self.is_invisible
 
     def update_position(self):
-        if self.AI_engine:
-            self.AI_engine.next_move()
-
         if self.direction == game.LEFT:
             self.x -= 1
         elif self.direction == game.RIGHT:

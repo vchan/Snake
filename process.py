@@ -41,10 +41,10 @@ class AIProcess(Process):
         self.input_queue.put_nowait(key)
 
     def press_left(self):
-        self._press(player_controls[self.player_index][0])
+        self._press(player_controls[self.player_index][game.LEFT])
 
     def press_right(self):
-        self._press(player_controls[self.player_index][1])
+        self._press(player_controls[self.player_index][game.RIGHT])
 
     def press_up(self):
         self._press(player_controls[self.player_index][2])
