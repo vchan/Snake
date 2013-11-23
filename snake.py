@@ -1,6 +1,5 @@
 from collections import deque
 import multiprocessing
-from ctypes import c_char
 import Queue
 
 import pygame
@@ -14,7 +13,6 @@ import ai_jason
 import process
 from ai_vincent import VincentAI
 ai_classes = [VincentAI, ai_jason.JasonAI,]
-serializer = process.Serializer()
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -142,9 +140,7 @@ def main_loop():
                         shared_players = multiprocessing.Array(process.MovableGameObject,
                                 list(((player.x, player.y), player.direction)
                                     for player in game.players))
-                        shared_board = multiprocessing.Array(c_char * game.BOARD_HEIGHT,
-                                serializer.serialize_board(game.board, process.board()))
-                        ai_processes = [_class(player_index=i+game.num_players-1, board=shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
+                        ai_processes = [_class(player_index=i+game.num_players-1, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                         map(lambda proc: proc.start(), ai_processes)
                 else:
                     game.players[1].name = "Jason AI"
@@ -209,8 +205,6 @@ def main_loop():
                 for i, v in enumerate(list(((player.x, player.y),
                     player.direction) for player in game.players)):
                     shared_players[i] = v
-
-                serializer.serialize_board(game.board, shared_board)
 
             # Draw the screen
             game.screen.blit(background, (0, 0))

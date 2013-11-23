@@ -1,9 +1,13 @@
 import ConfigParser
+import multiprocessing
+from ctypes import c_char
 from random import randrange, randint
 
 import pygame
 import game_objects
 import game_effects
+import process
+serializer = process.Serializer()
 
 NAME = "Battle Snake %i" % randint(3000, 3019)  # Choose a random futuristic-looking year :)
 WINDOW_WIDTH = 1280
@@ -58,26 +62,14 @@ class BoardRow(list):
         if value and self.__getitem__(key):
             raise CollisionError(value, self.__getitem__(key))
         super(BoardRow, self).__setitem__(key, value)
+        shared_board[board.index(self)][key] = serializer.translate_board_obj(value)
+
+shared_board = multiprocessing.Array(c_char * BOARD_HEIGHT,
+        ((c_char * BOARD_HEIGHT) * BOARD_WIDTH)())
+
 board = []
 for i in range(BOARD_WIDTH):
     board.append(BoardRow([None,] * BOARD_HEIGHT))
-
-# def load_level(level):
-#     reset()
-#     layout = level.layout.split('\n')[1:]
-#     for y, row in enumerate(layout):
-#         for x, column in enumerate(row):
-#             if column == 'W':
-#                 walls.append(game_objects.Wall(x, y))
-#             if column == 'I':
-#                 walls.append(game_objects.IndestructableWall(x, y))
-#             elif column in ('1', '2', '3', '4'):
-#                 if int(column) <= num_players:
-#                     players.append(game_objects.Player('Player %s' % column, x, y,
-#                         level.player_directions[column], player_colors[column]))
-
-#     for i in range(level.num_apples):
-#         add_apple()
 
 def update():
     for obj in apples + missiles:

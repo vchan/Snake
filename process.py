@@ -26,25 +26,26 @@ class MovableGameObject(Structure):
     def __repr__(self):
         return '(%d, %d) %d' % (self.x, self.y, self.direction,)
 
-board = (c_char * game.BOARD_HEIGHT) * game.BOARD_WIDTH
 
 class Serializer(object):
     def serialize_board(self, board, _board):
         for x, row in enumerate(board):
             for y, obj in enumerate(row):
-                c = ' '
-                if isinstance(obj, game_objects.Wall):
-                    c = 'W'
-                elif isinstance(obj, game_objects.IndestructableWall):
-                    c = 'I'
-                elif isinstance(obj, game_objects.Apple):
-                    c = 'A'
-                elif isinstance(obj, game_objects.SnakePart):
-                    c = str(game.players.index(obj.player) + 1)
-                elif isinstance(obj, game_objects.Missile):
-                    c = 'M'
-                _board[x][y] = c
+                _board[x][y] = self.translate_board_obj(obj)
         return _board
+
+    def translate_board_obj(self, obj):
+        if isinstance(obj, game_objects.Wall):
+            return 'W'
+        elif isinstance(obj, game_objects.IndestructableWall):
+            return 'I'
+        elif isinstance(obj, game_objects.Apple):
+            return 'A'
+        elif isinstance(obj, game_objects.SnakePart):
+            return 'S'
+        elif isinstance(obj, game_objects.Missile):
+            return 'M'
+        return ' '
 
 class AIProcess(Process):
     """ Wrapper class for a python process. """

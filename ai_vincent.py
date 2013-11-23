@@ -101,7 +101,7 @@ class VincentAI(AIProcess):
                 y = game.BOARD_HEIGHT-1
             if y >= game.BOARD_HEIGHT:
                 y = 0
-            if self.board[x][y] not in ('W', '1', '2', '3', '4',):
+            if self.board[x][y] not in ('W', 'S',):
                 return Node(x, y)
 
         for offset in (-1, 1):
@@ -113,7 +113,7 @@ class VincentAI(AIProcess):
                 yield neighbor
 
     def heuristic_cost_estimate(self, start, goal):
-        return self.dist_between(start, goal) * 2
+        return self.dist_between(start, goal) * 8
 
     def reconstruct_path(self, came_from, current_node):
         if current_node in came_from:
