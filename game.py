@@ -64,6 +64,7 @@ class BoardRow(list):
         super(BoardRow, self).__setitem__(key, value)
         shared_board[board.index(self)][key] = serializer.translate_board_obj(value)
 
+# Board in shared memory used by AI processes
 shared_board = multiprocessing.Array(c_char * BOARD_HEIGHT,
         ((c_char * BOARD_HEIGHT) * BOARD_WIDTH)())
 

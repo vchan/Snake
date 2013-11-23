@@ -9,15 +9,23 @@ class Node(object):
         self.x, self.y = x, y
         self.f_score = 0
         self.g_score = 0
+        self.h_score = 0
 
     def __lt__(self, other):
         """ Used by heapq for maintaining the priority queue. """
+        if self.f_score == other.f_score:
+            return self.h_score < other.h_score
         return self.f_score < other.f_score
 
     def __eq__(self, other):
+        """ Used to compare nodes. Nodes are the same if their coordinates are
+            the same."""
         return self.x == other.x and self.y == other.y
 
     def __hash__(self):
+        """ Used on members of hashed collections, i.e. sets and dictionaries.
+            Here we want nodes to be unique by their coodinates in the
+            closed_set. """
         return int('1%d%d' % (self.x, self.y))
 
     def __repr__(self):
@@ -36,6 +44,7 @@ class VincentAI(AIProcess):
 
     def execute(self):
         if self.last_known_position == (self.player.x, self.player.y):
+            # Player has not moved yet. No need to do anything.
             return
         self.update_position()
         closest_apple = self.get_closest_apple()[1]
@@ -64,12 +73,14 @@ class VincentAI(AIProcess):
     def a_star(self, goal):
         start = Node(self.player.x, self.player.y)
         goal = Node(goal.x, goal.y)
-        closed_set = set()
-        open_heap = [start]
-        came_from = {}
+        closed_set = set() # The set of nodes already evaluated
+        open_heap = [start] # The set of tentative nodes to be evaluated
+        came_from = {} # The map of navigated nodes
 
-        start.g_score = 0
-        start.f_score = start.g_score + self.heuristic_cost_estimate(start, goal)
+        start.g_score = 0 # Cost from start along best known path
+        start.h_score = self.heuristic_cost_estimate(start, goal)
+        # Estimated total cost from start to goal through y
+        start.f_score = start.g_score + start.h_score
 
         while open_heap:
             current = heapq.heappop(open_heap)
@@ -77,22 +88,27 @@ class VincentAI(AIProcess):
                 return self.reconstruct_path(came_from, goal.get_coordinates())
             closed_set.add(current)
 
-            for neighbor in self.get_neighbors(current):
+            for neighbor in self.get_walkable_neighbors(current):
                 tentative_g_score = current.g_score + self.dist_between(current, neighbor)
-                tentative_f_score = tentative_g_score + self.heuristic_cost_estimate(neighbor, goal)
+                tentative_h_score = self.heuristic_cost_estimate(neighbor, goal)
+                tentative_f_score = tentative_g_score + tentative_h_score
                 if neighbor in closed_set and tentative_f_score >= neighbor.f_score:
                     continue
 
                 if neighbor not in open_heap or tentative_f_score < neighbor.f_score:
                     came_from[neighbor.get_coordinates()] = current.get_coordinates()
                     neighbor.g_score = tentative_g_score
+                    neighbor.h_score = tentative_h_score
                     neighbor.f_score = tentative_f_score
                     if neighbor not in open_heap:
                         heapq.heappush(open_heap, neighbor)
+        # No path found
         raise
 
-    def get_neighbors(self, node):
+    def get_walkable_neighbors(self, node):
+        """ Evaluate the node's 4 neighbors and return the walkable ones. """
         def check_node(x, y):
+            # Account for board wrapping
             if x < 0:
                 x = game.BOARD_WIDTH-1
             if x >= game.BOARD_WIDTH:
@@ -101,7 +117,7 @@ class VincentAI(AIProcess):
                 y = game.BOARD_HEIGHT-1
             if y >= game.BOARD_HEIGHT:
                 y = 0
-            if self.board[x][y] not in ('W', 'S',):
+            if self.board[x][y] not in ('W', 'S', 'M'):
                 return Node(x, y)
 
         for offset in (-1, 1):

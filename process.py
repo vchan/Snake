@@ -1,9 +1,8 @@
 from multiprocessing import Process, Event
-from ctypes import Structure, c_int, c_char
+from ctypes import Structure, c_int
 
 from pygame.locals import *
 
-import game
 import game_objects
 
 player_controls = {
@@ -25,7 +24,6 @@ class MovableGameObject(Structure):
 
     def __repr__(self):
         return '(%d, %d) %d' % (self.x, self.y, self.direction,)
-
 
 class Serializer(object):
     def serialize_board(self, board, _board):
