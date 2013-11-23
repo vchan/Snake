@@ -142,7 +142,7 @@ def main_loop():
                         shared_players = multiprocessing.Array(process.MovableGameObject,
                                 list(((player.x, player.y), player.direction)
                                     for player in game.players))
-                        shared_board = multiprocessing.Array(c_char * game.BOARD_WIDTH,
+                        shared_board = multiprocessing.Array(c_char * game.BOARD_HEIGHT,
                                 serializer.serialize_board(game.board, process.board()))
                         ai_processes = [_class(player_index=i+game.num_players-1, board=shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                         map(lambda proc: proc.start(), ai_processes)

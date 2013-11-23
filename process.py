@@ -26,12 +26,12 @@ class MovableGameObject(Structure):
     def __repr__(self):
         return '(%d, %d) %d' % (self.x, self.y, self.direction,)
 
-board = (c_char * game.BOARD_WIDTH) * game.BOARD_HEIGHT
+board = (c_char * game.BOARD_HEIGHT) * game.BOARD_WIDTH
 
 class Serializer(object):
     def serialize_board(self, board, _board):
-        for y, row in enumerate(board):
-            for x, obj in enumerate(row):
+        for x, row in enumerate(board):
+            for y, obj in enumerate(row):
                 c = ' '
                 if isinstance(obj, game_objects.Wall):
                     c = 'W'
