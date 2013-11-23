@@ -162,6 +162,7 @@ class Player(object):
         self.invincible_frame_count = 0
         self.kills = 0
         self.AI_engine = None
+        self.onkill = None  # Get's set by an AI player - executes when you get killed
 
     def respawn(self):
         part = self.parts.pop()
@@ -255,6 +256,9 @@ class Player(object):
         self._lock_set_direction = False
 
     def kill(self, collidee=None):
+        if self.onkill:
+            self.onkill()
+
         self.is_dead = True
         for part in self.parts:
             part.remove_from_board()
