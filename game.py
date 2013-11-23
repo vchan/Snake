@@ -4,6 +4,7 @@ from ctypes import c_char
 from random import randrange, randint
 
 import pygame
+from pygame.locals import *
 import game_objects
 import game_effects
 import process
@@ -18,6 +19,13 @@ BOARD_HEIGHT = 45
 CELL_WIDTH = WINDOW_WIDTH / BOARD_WIDTH
 CELL_HEIGHT = (WINDOW_HEIGHT-SCOREBOARD_HEIGHT) / BOARD_HEIGHT
 LEFT, RIGHT, UP, DOWN = range(4)
+
+player_controls = {
+    0: [K_LEFT, K_RIGHT, K_UP, K_DOWN],
+    1: [K_a, K_d, K_w, K_s],
+    2: [K_j, K_l, K_i, K_k],
+    3: [K_f, K_h, K_t, K_g],
+}
 
 num_players = None
 level = None

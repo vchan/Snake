@@ -100,11 +100,6 @@ def main_loop():
     background = pygame.Surface(game.screen.get_size()).convert()
     background.fill(pygame.Color(0, 0, 0))
 
-    player1_controls = [K_LEFT, K_RIGHT, K_UP, K_DOWN]
-    player2_controls = [K_a, K_d, K_w, K_s]
-    player3_controls = [K_j, K_l, K_i, K_k]
-    player4_controls = [K_f, K_h, K_t, K_g]
-
     input_queue = multiprocessing.Queue()
 
     while True:
@@ -147,6 +142,7 @@ def main_loop():
         # Start game loop
         return_to_menu = False
         game_status = None
+        ai_frame_count = 1
 
         while not return_to_menu:
             clock.tick(game.frames_per_second)
@@ -160,6 +156,16 @@ def main_loop():
                         input_queue.get_nowait(),}))
                 except Queue.Empty, qe:
                     break
+
+            # Process AI next-moves. We're syncing frames with player update_position()
+            if ai_frame_count < 3:
+                ai_frame_count += 1
+
+            else:
+                for player in game.players:
+                    if player.AI_engine:
+                        player.AI_engine.next_move()
+                ai_frame_count = 1
 
             # Get input
             for event in pygame.event.get():
@@ -177,14 +183,14 @@ def main_loop():
                         game.init_level()
                         game_status = None
                         continue
-                    elif event.key in player1_controls:
-                        game.players[0].set_direction(player1_controls.index(event.key))
-                    elif event.key in player2_controls and game.num_players > 1:
-                        game.players[1].set_direction(player2_controls.index(event.key))
-                    elif event.key in player3_controls and game.num_players > 2:
-                        game.players[2].set_direction(player3_controls.index(event.key))
-                    elif event.key in player4_controls and game.num_players > 3:
-                        game.players[3].set_direction(player4_controls.index(event.key))
+                    elif event.key in game.player_controls[0]:
+                        game.players[0].set_direction(game.player_controls[0].index(event.key))
+                    elif event.key in game.player_controls[1] and game.num_players > 1:
+                        game.players[1].set_direction(game.player_controls[1].index(event.key))
+                    elif event.key in game.player_controls[2] and game.num_players > 2:
+                        game.players[2].set_direction(game.player_controls[2].index(event.key))
+                    elif event.key in game.player_controls[3] and game.num_players > 3:
+                        game.players[3].set_direction(game.player_controls[3].index(event.key))
 
             # Update effects
             for effect in game.effects:

@@ -3,14 +3,8 @@ from ctypes import Structure, c_int
 
 from pygame.locals import *
 
+import game
 import game_objects
-
-player_controls = {
-    0: [K_LEFT, K_RIGHT, K_UP, K_DOWN],
-    1: [K_a, K_d, K_w, K_s],
-    2: [K_j, K_l, K_i, K_k],
-    3: [K_f, K_h, K_t, K_g],
-}
 
 class GameObject(Structure):
     _fields_ = [('x', c_int), ('y', c_int)]
@@ -71,16 +65,16 @@ class AIProcess(Process):
         self.input_queue.put_nowait(key)
 
     def press_left(self):
-        self._press(player_controls[self.player_index][0])
+        self._press(game.player_controls[self.player_index][game.LEFT])
 
     def press_right(self):
-        self._press(player_controls[self.player_index][1])
+        self._press(game.player_controls[self.player_index][game.RIGHT])
 
     def press_up(self):
-        self._press(player_controls[self.player_index][2])
+        self._press(game.player_controls[self.player_index][game.UP])
 
     def press_down(self):
-        self._press(player_controls[self.player_index][3])
+        self._press(game.player_controls[self.player_index][game.DOWN])
 
     def execute(self):
         """ Override this method to control your snake. Use a press_* function
