@@ -128,8 +128,9 @@ class JasonAI(AStar):
         super(JasonAI, self).__init__()
         self.player = player
         self.player_number = game.players.index(self.player)
+        self.player.onkill = self.onkill
 
-        self.enable_visualization = False
+        self.enable_visualization = True
         self.wrap_coordinates = True
         self.retarget_alternate_goals = True
         self.check_for_closer_apples = True
@@ -137,7 +138,7 @@ class JasonAI(AStar):
         self.destination = None
         self.path = None
 
-        self.survival_cycles = 0
+        self.survival_cycles = 99999
         self.MAX_SAFETY_SCORE = 100
 
     def is_out_of_bounds(self, node):
@@ -252,7 +253,7 @@ class JasonAI(AStar):
 
             # Missile in range
             for node in neighbors:
-                if self.is_missile(node):
+                if self.is_missile(node) and self.get_board_object(node).direction == self.get_opposite_direction(direction):
                     return 1
 
             # Player in range
@@ -272,11 +273,13 @@ class JasonAI(AStar):
 
         # If we're forced to choose a suboptimal path, shoot a missile.
         if safest_score < self.MAX_SAFETY_SCORE:
-            print "Safest path not available. Score: ", safest_score
+            print "Safest path not available. Scores:", safety_scores
+            pygame.time.wait(1000*10)
 
         # If there are no safe moves
         if not safest_score:
-            print "No safe move!"
+            print "NO MORE SAFE MOVES! Scores:", safety_scores
+            pygame.time.wait(1000*10)
             return node_ahead
 
         # Keep going if it's safe
@@ -302,8 +305,8 @@ class JasonAI(AStar):
 
         for distance in range(1, iterations+1):
             node = self.node_at_offset(map(lambda x: x*distance, direction_offsets[self.player.direction]))
-            if self.enable_visualization:
-                self.draw_node(node, pygame.Color("orange"))
+            # if self.enable_visualization:
+            #     self.draw_node(node, pygame.Color("orange"))
             if not self.is_traversable(node):
                 return (node, distance)
 
@@ -312,11 +315,10 @@ class JasonAI(AStar):
 
     def shoot_missle(self):
         node, distance = self.get_line_of_fire()
+        # if self.enable_visualization:
+        #     pygame.display.flip()
+
         player_length = len(self.player.parts)
-
-        if self.enable_visualization:
-            pygame.display.flip()
-
         if not node or player_length <= 1:
             return False
 
@@ -339,28 +341,20 @@ class JasonAI(AStar):
 
     def prepare_path(self):
         if self.survival_cycles > 0:
-            self.destination = self.next_safe_move()
-            self.path = deque([self.destination])
+            self.path = deque([self.next_safe_move()])
             self.survival_cycles -= 1
             return
 
         # If a path exists, see if there's a better one
         if self.path:
-            # Check if the next node in our path is reachable
-            try:
-                next_direction = self.direction_to_node(self.path[0])
-            except Exception:
-                print "Path broke. Reassigning a new path..."
+            # Check if our apple is still there
+            if not self.is_apple(self.destination):
+                print "Apple no longer available"
                 self.path = None
-            else:
-                # Check if our apple is still there
-                if not self.is_apple(self.destination):
-                    print "Apple no longer available"
-                    self.path = None
-                # Check if a closer apple appeared
-                elif self.check_for_closer_apples and self.destination != self.get_closest_apple():
-                    print "Found closer apple"
-                    self.path = None
+            # Check if a closer apple appeared
+            elif self.check_for_closer_apples and self.destination != self.get_closest_apple():
+                print "Found closer apple"
+                self.path = None
 
         # Create path to the closest apple
         if not self.path:
@@ -384,6 +378,18 @@ class JasonAI(AStar):
         if self.survival_cycles > 0:
             self.prepare_path()
             return
+
+    def onkill(self):
+        self.path = None
+        pygame.time.wait(1000*10)
+
+        # # Check if the next node in our path is reachable
+        # try:
+        #     next_direction = self.direction_to_node(self.path[0])
+        # except Exception:
+        #     print "Path broke. Reassigning a new path..."
+        #     self.path = None
+        # else:
 
     def press_key(self, direction):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player_number][direction]}))
