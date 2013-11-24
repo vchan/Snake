@@ -23,7 +23,7 @@ class Menu():
         self.selector_padding = 20
         self.spacing = spacing
         self.frames_per_second = 10
-
+ 
     def show(self):
         clock = pygame.time.Clock()
         background = pygame.Surface(game.screen.get_size()).convert()
