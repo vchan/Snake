@@ -75,8 +75,7 @@ class VincentAI(AIProcess):
         player_node = Node(self.player.x, self.player.y)
         moved = False
         for direction in [game.LEFT, game.RIGHT, game.UP, game.DOWN,]:
-            if self.get_node_in_direction(player_node,
-                    direction).get_coordinates() == next_move:
+            if self.get_node_in_direction(player_node, direction).get_coordinates() == next_move:
                 moved = True
                 if self.player.direction != direction:
                     getattr(self, 'press_%s' % _DIRECTIONS[direction])()
@@ -177,7 +176,7 @@ class VincentAI(AIProcess):
                 yield neighbor
 
     def heuristic_cost_estimate(self, start, goal):
-        return self.dist_between(start, goal) * 8
+        return self.dist_between(start, goal) * 0
 
     def reconstruct_path(self, came_from, current_node):
         path = deque()
