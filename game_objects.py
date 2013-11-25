@@ -238,8 +238,8 @@ class Player(object):
                 game.apples.remove(ce.collidee)
                 ce.collidee.remove_from_board()
                 self.grow = True
-                if self.player_number == 0:
-                    self.grow = False
+                # if self.player_number == 0:
+                #     self.grow = False
                 head = SnakePart(self, self.x, self.y, self.color)
                 self.parts.append(head)
                 game.add_apple()

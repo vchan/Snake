@@ -202,6 +202,18 @@ class JasonAI(AStar):
     def get_board_object(self, node):
         return game.board[node[0]][node[1]]
 
+    def translate_direction(self, facing_direction, going_direction):
+        left = {game.LEFT: game.DOWN, game.RIGHT: game.UP, game.UP: game.LEFT, game.DOWN: game.RIGHT}
+
+        if going_direction == game.LEFT:
+            return left[facing_direction]
+        if going_direction == game.RIGHT:
+            return self.get_opposite_direction(left[facing_direction])
+        if going_direction == game.UP:
+            return facing_direction
+        if going_direction == game.DOWN:
+            return self.get_opposite_direction(facing_direction)
+        
     def get_opposite_direction(self, direction):
         opposites = [game.RIGHT, game.LEFT, game.DOWN, game.UP]
         return opposites[direction]
@@ -213,16 +225,15 @@ class JasonAI(AStar):
         ox, oy = offsets[direction]
         return self.wrap_node((start_node[0] + ox*steps, start_node[1] + oy*steps))
 
+    # def node_at_offset(self, offset, start_node=None):
+    #     """
+    #     Takes the player's current position and applies the given (x, y) offset. Handles wrapping.
+    #     Uses start_node instead of the player's position if specified.
 
-    def node_at_offset(self, offset, start_node=None):
-        """
-        Takes the player's current position and applies the given (x, y) offset. Handles wrapping.
-        Uses start_node instead of the player's position if specified.
-
-        """
-        x, y = start_node or (self.player.x, self.player.y)
-        ox, oy = offset
-        return self.wrap_node((x+ox, y+oy))
+    #     """
+    #     x, y = start_node or (self.player.x, self.player.y)
+    #     ox, oy = offset
+    #     return self.wrap_node((x+ox, y+oy))
 
     def direction_to_node(self, node):
         """Given a node adjacent to player, tells you which direction you must go to get to it."""
@@ -376,7 +387,7 @@ class JasonAI(AStar):
         """Returns the coordinates of the first object in the line of fire, as well as our distance to it"""
         iterations = game.BOARD_WIDTH if self.player.direction in (game.LEFT, game.RIGHT) else game.BOARD_HEIGHT
 
-        for distance in range(1, iterations+1):
+        for distance in range(1, iterations):
             node = self.node_at_direction(self.player.direction, steps=distance)
             if self.enable_line_of_fire_visualization:
                 self.draw_node(node, pygame.Color("orange"))
@@ -387,28 +398,53 @@ class JasonAI(AStar):
         return (False, False)
 
     def shoot_missile(self):
-        if self.player.get_length() < 3:
+        # Always keep a length of 2
+        if self.player.get_length() <= 2:
             return False
 
-        node, distance = self.get_line_of_fire()
-        if not node:
-            return False
+        # Shoot opponents within 6 nodes from us
+        start_nodes = [(self.player.x, self.player.y)]
 
-        # If we see a player, take the shot!
-        if self.is_snake_head(node):
-            player = self.get_board_object(node).player
-            if player is self.player:
+        # Include the left and right lanes if we've got extra ammo
+        if self.player.get_length() > 5:
+            start_nodes.append(self.node_at_direction(self.translate_direction(self.player.direction, game.LEFT)))
+            start_nodes.append(self.node_at_direction(self.translate_direction(self.player.direction, game.RIGHT)))
+
+        # Look for players!
+        look_ahead = 6
+        for start_node in start_nodes:
+            for step in range(1, look_ahead+1):
+                node = self.node_at_direction(self.translate_direction(self.player.direction, game.UP), start_node=start_node, steps=step)
+                
+                # If we see a player, take the shot.
+                if self.is_snake_head(node):
+                    return True
+
+                # Draw our line of fire
+                if self.enable_line_of_fire_visualization:
+                    self.draw_node(node, pygame.Color("orange"))
+
+        # See if any opponents are coming towards us
+        if self.player.get_length() > 5:
+            node, distance = self.get_line_of_fire()
+            if not node:
                 return False
-            elif distance < 3:
-                return True
-            elif player.direction == self.get_opposite_direction(self.player.direction):
-                return True
-            elif player.get_length() == 1 and player.direction == self.player.direction:
-                return True
+            if self.is_snake_head(node):
+                player = self.get_board_object(node).player
+                # Shoot if they're facing us
+                if player.direction == self.get_opposite_direction(self.player.direction):
+                    return True
+                # Shoot if they're 1 block long
+                elif player.get_length() == 1 and player.direction == self.player.direction:
+                    return True
+                # Shoot regardless if we've got extra ammo
+                elif self.player.get_length() > 10:
+                    return True
 
         # Shoot walls if we have the ammo
-        if self.is_wall(node) and self.player.get_length() > 10:
+        if self.is_wall(node) and self.player.get_length() > 15:
             return True
+
 
     def onkill(self, collidee):
         self.path = None
@@ -432,9 +468,19 @@ class JasonAI(AStar):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
 
     def next_move(self):
+        # Decide whether to shoot a missile
         if self.shoot_missile():
             self.press_key(self.player.direction)
 
+        # Reset our path if it's broken
+        if self.path:
+            try:
+                self.direction_to_node(self.path[0])
+            except Exception:
+                print "Path broke. Reassigning a new path..."
+                self.path = None
+
+        # Get the next move
         self.prepare_path()
         next_direction = self.direction_to_node(self.path.popleft())
         if next_direction != self.player.direction:
