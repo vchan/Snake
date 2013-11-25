@@ -58,7 +58,7 @@ class Node(object):
             pygame.draw.rect(game.screen, color, self.rect)
 
 class VincentAI(AIProcess):
-    def __init__(self, player, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(VincentAI, self).__init__(*args, **kwargs)
         self.update_position()
         self.goal = None

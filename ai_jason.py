@@ -122,11 +122,10 @@ class AStar(object):
 class JasonAI(AStar):
     MAX_SAFETY_SCORE = 100
 
-    def __init__(self, player, *args, **kwargs):
+    def __init__(self, player):
         super(JasonAI, self).__init__()
         self.player = player
         self.player.onkill = self.onkill
-        self.last_known_position = None
 
         self.enable_path_visualization = False
         self.enable_line_of_fire_visualization = False
@@ -314,7 +313,7 @@ class JasonAI(AStar):
 
         # If we're forced to choose a suboptimal path, shoot a missile.
         if safest_score < JasonAI.MAX_SAFETY_SCORE:
-            print "(P", self.player.player_number , ") Safest path not available. Scores:", safety_scores
+            print "Safest path not available. Scores:", safety_scores
 
         # If there are no safe moves
         if not safest_score:
@@ -450,8 +449,6 @@ class JasonAI(AStar):
     def onkill(self, collidee):
         self.path = None
 
-        print "(P", self.player.player_number, ") ",
-
         if isinstance(collidee, game_objects.Wall):
             print "Death by wall"
         elif isinstance(collidee, game_objects.SnakePart):
@@ -470,12 +467,10 @@ class JasonAI(AStar):
     def press_key(self, direction):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
 
-    def execute(self):
-        # Skip if player has not yet moved
-        if self.last_known_position == (self.player.x, self.player.y):
-            return
-        else:
-            self.last_known_position = (self.player.x, self.player.y)
+    def next_move(self):
+        # Decide whether to shoot a missile
+        if self.shoot_missile():
+            self.press_key(self.player.direction)
 
         # Reset our path if it's broken
         if self.path:
@@ -484,10 +479,6 @@ class JasonAI(AStar):
             except Exception:
                 print "Path broke. Reassigning a new path..."
                 self.path = None
-
-        # Decide whether to shoot a missile
-        if self.shoot_missile():
-            self.press_key(self.player.direction)
 
         # Get the next move
         self.prepare_path()

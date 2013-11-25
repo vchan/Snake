@@ -10,7 +10,7 @@ import game_effects
 import process
 serializer = process.Serializer()
 
-NAME = "Battle Snake %i" % (randint(3, 9) * 1000)  # Choose a random futuristic-looking year :)
+NAME = "Battle Snake %i" % randint(3000, 3019)  # Choose a random futuristic-looking year :)
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 800
 SCOREBOARD_HEIGHT = 80
