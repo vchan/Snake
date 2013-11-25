@@ -122,10 +122,11 @@ class AStar(object):
 class JasonAI(AStar):
     MAX_SAFETY_SCORE = 100
 
-    def __init__(self, player):
+    def __init__(self, player, *args, **kwargs):
         super(JasonAI, self).__init__()
         self.player = player
         self.player.onkill = self.onkill
+        self.last_known_position = None
 
         self.enable_path_visualization = False
         self.enable_line_of_fire_visualization = False
@@ -467,7 +468,14 @@ class JasonAI(AStar):
     def press_key(self, direction):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
 
-    def next_move(self):
+    def execute(self):
+        # Skip if player has not moved
+        if self.last_known_position == (self.player.x, self.player.y):
+            return
+        else:
+            self.last_known_position = (self.player.x, self.player.y)
+
+
         # Decide whether to shoot a missile
         if self.shoot_missile():
             self.press_key(self.player.direction)
