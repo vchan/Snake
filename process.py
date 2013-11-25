@@ -14,7 +14,8 @@ class GameObject(Structure):
 
 class MovableGameObject(Structure):
     _anonymous_ = ('game_object',)
-    _fields_ = [('game_object', GameObject), ('direction', c_int)]
+    _fields_ = [('game_object', GameObject), ('direction', c_int),
+            ('length', c_int),]
 
     def __repr__(self):
         return '(%d, %d) %d' % (self.x, self.y, self.direction,)

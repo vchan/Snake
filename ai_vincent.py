@@ -1,17 +1,18 @@
 import heapq
 import time
-from collections import deque
+from collections import deque, defaultdict
 
 import pygame
 
 from process import AIProcess
 import game
 
-VISUALIZE = True
+VISUALIZE = False
 OPPOSITE_DIRECTIONS = [game.RIGHT, game.LEFT, game.DOWN, game.UP,]
 _DIRECTIONS = ['left', 'right', 'up', 'down']
 
 HEURISTIC_SCALE = 10
+firing_range = 0
 
 class Node(object):
     def __init__(self, x, y):
@@ -35,6 +36,11 @@ class Node(object):
             the same."""
         return self.x == other.x and self.y == other.y
 
+    def __ne__(self, other):
+        """ Used to compare nodes. Nodes are the same if their coordinates are
+            the same."""
+        return not self.__eq__(other)
+
     def __hash__(self):
         """ Used on members of hashed collections, i.e. sets and dictionaries.
             Here we want nodes to be unique by their coodinates in the
@@ -57,20 +63,25 @@ class VincentAI(AIProcess):
         self.update_position()
         self.goal = None
         self.path = None
+        self.node = None
         self.board_modifiers = None
         self.update_board_modifiers()
 
     def update_position(self):
         self.last_known_position = (self.player.x, self.player.y)
+        self.node = Node(self.player.x, self.player.y)
+        global firing_range
+        firing_range = min(self.player.length - 1, 5)
 
     def execute(self):
         if self.last_known_position == (self.player.x, self.player.y):
             # Player has not moved yet. No need to do anything.
             return
         self.update_position()
-        # Check for immediate danger
-        #if self.get_node_in_direction(self.player.direction) in ('W', 'I', 'S', 'W',):
-        #    pass
+        self.update_enemy_positions()
+        if self.consider_fire():
+            self.fired = True
+            getattr(self, 'press_%s' % _DIRECTIONS[self.player.direction])()
 
         if not self.path:
             apple = self.get_best_apples()[0][1]
@@ -88,6 +99,7 @@ class VincentAI(AIProcess):
                 if self.player.direction != direction:
                     getattr(self, 'press_%s' % _DIRECTIONS[direction])()
                 break
+
         if not moved or self.reconsider_path():
             self.path = None
             self.update_board_modifiers()
@@ -105,6 +117,7 @@ class VincentAI(AIProcess):
         return False
 
     def update_board_modifiers(self):
+        """ Update modifiers that is used in A* heuristic estimates. """
         self.board_modifiers = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
         for x, row in enumerate(self.board):
             for y, obj in enumerate(row):
@@ -122,6 +135,32 @@ class VincentAI(AIProcess):
                             if _y >= game.BOARD_HEIGHT:
                                 _y = 0
                             self.board_modifiers[_x][_y] += 1
+
+    def update_enemy_positions(self):
+        self.player_positions = defaultdict(set)
+        for i in range(1, firing_range + 1):
+            if i == 1:
+                nodes = [Node(player.x, player.y) for player in self._players if Node(player.x, player.y) != self.node]
+            else:
+                nodes = self.player_positions[i - 1]
+            for node in nodes:
+                for direction in [game.LEFT, game.RIGHT, game.UP, game.DOWN,]:
+                    next_move = self.get_node_in_direction(node, direction)
+                    if self.board[next_move.x][next_move.y] not in ('W', 'I', 'S', 'M',):
+                        self.player_positions[i].add(next_move)
+
+    def consider_fire(self):
+        node = self.node
+        for i in range(firing_range * 3):
+            node = self.get_node_in_direction(node, self.player.direction)
+            if self.board[node.x][node.y] in ('W', 'I', 'S',):
+                return False
+            if node in self.player_positions[i//3 + 1]:
+                return True
+        return False
+
+    def update_missile_positions(self):
+        self.missile_possions = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
 
     def get_apples(self, player, apples=None):
         """ Returns list of apples sorted by distance from player. """

@@ -203,11 +203,10 @@ def main_loop():
             game.update()
 
             # Update shared board
-            for i, v in enumerate(list((apple.x, apple.y) for apple in game.apples)):
+            for i, v in enumerate([(apple.x, apple.y) for apple in game.apples]):
                 shared_apples[i] = v
 
-            for i, v in enumerate(list(((player.x, player.y),
-                player.direction) for player in game.players)):
+            for i, v in enumerate([((player.x, player.y), player.direction, player.get_length()) for player in game.players]):
                 shared_players[i] = v
 
             # Draw the screen
