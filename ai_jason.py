@@ -126,7 +126,7 @@ class JasonAI(AStar):
         super(JasonAI, self).__init__()
         self.player = player
         self.player.onkill = self.onkill
-        self.last_known_position = None
+        # self.last_known_position = None
 
         self.enable_path_visualization = False
         self.enable_line_of_fire_visualization = False
@@ -471,11 +471,11 @@ class JasonAI(AStar):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
 
     def execute(self):
-        # Skip if player has not yet moved
-        if self.last_known_position == (self.player.x, self.player.y):
-            return
-        else:
-            self.last_known_position = (self.player.x, self.player.y)
+        # # Skip if player has not yet moved
+        # if self.last_known_position == (self.player.x, self.player.y):
+        #     return
+        # else:
+        #     self.last_known_position = (self.player.x, self.player.y)
 
         # Reset our path if it's broken
         if self.path:

@@ -145,6 +145,7 @@ def main_loop():
         # Start game loop
         return_to_menu = False
         game_status = None
+        ai_frame_count = 1
 
         while not return_to_menu:
             clock.tick(game.frames_per_second)
@@ -161,7 +162,12 @@ def main_loop():
 
             # Process non multiprocessing AI moves
             if not game.use_multiprocessing:
-                map(lambda proc: proc.execute(), ai_processes)
+                if ai_frame_count < 3:
+                    ai_frame_count += 1
+                else:
+                    map(lambda proc: proc.execute(), ai_processes)
+                    ai_frame_count = 1
+
 
             # Get input
             for event in pygame.event.get():
