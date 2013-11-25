@@ -42,7 +42,7 @@ class Level(object):
                     game.walls.append(game_objects.IndestructableWall(x, y))
                 elif column in ('1', '2', '3', '4'):
                     if int(column) <= game.num_players:
-                        game.players.append(game_objects.Player('Player %s' % column, x, y, self.player_directions[column], player_colors[column]))
+                        game.players.append(game_objects.Player('Player %s' % column, int(column)-1, x, y, self.player_directions[column], player_colors[column]))
         for i in range(self.num_apples):
             game.add_apple()
 

@@ -138,10 +138,14 @@ def main_loop():
                             enumerate(ai_engines)]
                         map(lambda proc: proc.start(), ai_processes)
                 else:
-                    # game.players[0].name = "Jason AI 0"
-                    # game.players[0].AI_engine = ai_jason.JasonAI(game.players[0])
-                    game.players[1].name = "Jason AI"
+                    game.players[1].name = "Bebe Bot"
                     game.players[1].AI_engine = ai_jason.JasonAI(game.players[1])
+                    # game.num_players = 4
+                    # game.init_level()
+                    # for i in range(0, game.num_players):
+                    #     game.players[i].name = "Bebe Bot %i" % i
+                    #     game.players[i].AI_engine = ai_jason.JasonAI(game.players[i])
+
             else:
                 game.init_level()
 

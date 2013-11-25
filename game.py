@@ -70,22 +70,6 @@ board = []
 for i in range(BOARD_WIDTH):
     board.append(BoardRow([None,] * BOARD_HEIGHT))
 
-# def load_level(level):
-#     reset()
-#     layout = level.layout.split('\n')[1:]
-#     for y, row in enumerate(layout):
-#         for x, column in enumerate(row):
-#             if column == 'W':
-#                 walls.append(game_objects.Wall(x, y))
-#             if column == 'I':
-#                 walls.append(game_objects.IndestructableWall(x, y))
-#             elif column in ('1', '2', '3', '4'):
-#                 if int(column) <= num_players:
-#                     players.append(game_objects.Player('Player %s' % column, x, y,
-#                         level.player_directions[column], player_colors[column]))
-
-#     for i in range(level.num_apples):
-#         add_apple()
 
 def update():
     for obj in apples + missiles:

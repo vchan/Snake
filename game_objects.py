@@ -142,8 +142,9 @@ class IndestructableWall(GameObject):
         pass
 
 class Player(object):
-    def __init__(self, name, x, y, direction, color):
+    def __init__(self, name, player_number, x, y, direction, color):
         self.name = name
+        self.player_number = player_number
         self.color = color
         self.x = x
         self.y = y
@@ -230,6 +231,8 @@ class Player(object):
                 game.apples.remove(ce.collidee)
                 ce.collidee.remove_from_board()
                 self.grow = True
+                if self.player_number == 0:
+                    self.grow = False
                 head = SnakePart(self, self.x, self.y, self.color)
                 self.parts.append(head)
                 game.add_apple()
