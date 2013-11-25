@@ -15,7 +15,7 @@ class AStar(object):
         self.open_heap = []  # We use heap for fast min checks
         self.nodes = {}
 
-        self.enable_visualization = False
+        self.enable_path_visualization = False
         self.wrap_coordinates = False
         self.retarget_alternate_goals = False
 
@@ -45,10 +45,9 @@ class AStar(object):
 
     def retrace_path(self, node):
         path = self._retrace_path(node)
-        if self.enable_visualization:
+        if self.enable_path_visualization:
             for p in path:
                 self.draw_node(p, pygame.Color("red"))
-            pygame.display.flip()
         return path
 
     def open_set_add(self, node):
@@ -86,7 +85,7 @@ class AStar(object):
                 return self.retrace_path(current)
 
             # Draw the closed set
-            if self.enable_visualization:
+            if self.enable_path_visualization:
                 self.draw_node(current, pygame.Color("green"))
 
             # Get neighbors
@@ -111,7 +110,7 @@ class AStar(object):
                     self.nodes[neighbor] = {'g': g, 'h': h, 'f': g+h, 'parent': current}
                     self.open_set_add(neighbor)
                     # Draw the open set
-                    if self.enable_visualization:
+                    if self.enable_path_visualization:
                         self.draw_node(neighbor, pygame.Color("cyan"))
                 # If we find a different goal we like, return the path to it.
                 if self.retarget_alternate_goals and neighbor != goal and self.is_alternate_goal(neighbor):
@@ -128,7 +127,9 @@ class JasonAI(AStar):
         self.player = player
         self.player.onkill = self.onkill
 
-        self.enable_visualization = False
+        self.enable_path_visualization = False
+        self.enable_line_of_fire_visualization = False
+        self.enable_safety_score_visualization = False
         self.wrap_coordinates = True
         self.retarget_alternate_goals = True
         self.check_for_closer_apples = True
@@ -144,7 +145,7 @@ class JasonAI(AStar):
 
     def is_alternate_goal(self, node):
         if self.is_apple(node):
-            print "Found a different apple!"
+            # print "Found a different apple!"
             return True
         else:
             return False
@@ -245,12 +246,12 @@ class JasonAI(AStar):
 
         """
         directions = [game.LEFT, game.RIGHT, game.UP, game.DOWN]
-        if len(self.player.parts) > 1:
+        if self.player.get_length() > 1:
             directions.remove(self.get_opposite_direction(direction_to_check))  # Don't check behind us if we're > 1 block long
         node_to_check = self.node_at_direction(direction_to_check)
 
         # Draw current node
-        if self.enable_visualization:
+        if self.enable_safety_score_visualization:
             self.draw_node(node_to_check, pygame.Color("cyan"))
 
         # If node is not traversable (Certain death)
@@ -269,7 +270,7 @@ class JasonAI(AStar):
             nodes_in_range = [self.node_at_direction(direction, start_node=node_to_check, steps=i) for i in range(1, look_ahead+1)]
 
             # Draw the nodes being checked
-            if self.enable_visualization:
+            if self.enable_safety_score_visualization:
                 for node in nodes_in_range:
                     self.draw_node(node, pygame.Color("cyan"))
 
@@ -286,7 +287,7 @@ class JasonAI(AStar):
             for i, node in enumerate(nodes_in_range[1:5]):
                 if self.is_snake_head(node):
                     player = self.get_board_object(node).player
-                    if player.direction == self.get_opposite_direction(direction) and len(player.parts) > 1:
+                    if player.direction == self.get_opposite_direction(direction) and player.get_length() > 1:
                         return 40 + i
 
         return JasonAI.MAX_SAFETY_SCORE
@@ -295,9 +296,6 @@ class JasonAI(AStar):
         safety_scores = {direction: self.get_safety_score(direction) for direction in range(4) if direction != self.get_opposite_direction(self.player.direction)}
         safest_direction, safest_score = max(safety_scores.iteritems(), key=itemgetter(1))
         node_ahead = self.node_at_direction(self.player.direction)
-
-        if self.enable_visualization:
-            pygame.display.flip()
 
         # If we're forced to choose a suboptimal path, shoot a missile.
         if safest_score < JasonAI.MAX_SAFETY_SCORE:
@@ -343,11 +341,11 @@ class JasonAI(AStar):
 
             # Check if our apple is still there
             if not self.is_apple(self.destination):
-                print "Apple no longer available"
+                # print "Apple no longer available"
                 self.path = None
             # Check if a closer apple appeared
             elif self.check_for_closer_apples and self.destination != self.get_closest_apple():
-                print "Found closer apple"
+                # print "Found closer apple"
                 self.path = None
 
         # Create path to the closest apple
@@ -362,10 +360,8 @@ class JasonAI(AStar):
         if self.path:
             next_direction = self.direction_to_node(self.path[0])
             next_safety_score = self.get_safety_score(next_direction)
-            if self.enable_visualization:
-                pygame.display.flip()
             if next_safety_score < JasonAI.MAX_SAFETY_SCORE:
-                print "Danger! Safety score: ", next_safety_score
+                # print "Danger! Safety score: ", next_safety_score
                 self.survival_cycles = 1
 
         # If no good path is found, try to survive
@@ -375,13 +371,12 @@ class JasonAI(AStar):
 
     def get_line_of_fire(self):
         """Returns the coordinates of the first object in the line of fire, as well as our distance to it"""
-        direction_offsets = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Left, right, up, down
         iterations = game.BOARD_WIDTH if self.player.direction in (game.LEFT, game.RIGHT) else game.BOARD_HEIGHT
 
         for distance in range(1, iterations+1):
-            node = self.node_at_offset(map(lambda x: x*distance, direction_offsets[self.player.direction]))
-            # if self.enable_visualization:
-            #     self.draw_node(node, pygame.Color("orange"))
+            node = self.node_at_direction(self.player.direction, steps=distance)
+            if self.enable_line_of_fire_visualization:
+                self.draw_node(node, pygame.Color("orange"))
             if not self.is_traversable(node):
                 return (node, distance)
 
@@ -389,12 +384,11 @@ class JasonAI(AStar):
         return (False, False)
 
     def shoot_missile(self):
-        node, distance = self.get_line_of_fire()
-        # if self.enable_visualization:
-        #     pygame.display.flip()
+        if self.player.get_length() < 3:
+            return False
 
-        player_length = len(self.player.parts)
-        if not node or player_length <= 1:
+        node, distance = self.get_line_of_fire()
+        if not node:
             return False
 
         # If we see a player, take the shot!
@@ -406,30 +400,46 @@ class JasonAI(AStar):
                 return True
             elif player.direction == self.get_opposite_direction(self.player.direction):
                 return True
-            elif len(player.parts) == 1 and player.direction == self.player.direction:
+            elif player.get_length() == 1 and player.direction == self.player.direction:
                 return True
 
         # Shoot walls if we have the ammo
-        if self.is_wall(node) and player_length > 5:
+        if self.is_wall(node) and self.player.get_length() > 10:
             return True
 
-    def onkill(self):
+    def onkill(self, collidee):
         self.path = None
-        pygame.time.wait(1000*5)
+
+        if isinstance(collidee, game_objects.Wall):
+            print "Death by wall"
+        elif isinstance(collidee, game_objects.SnakePart):
+            if collidee.player is self.player:
+                print "Death by self-collision"
+            else:
+                print "Death by player-collision: ", collidee.player.name, ". Delaying 10 seconds..."
+                pygame.time.wait(1000*10)
+        elif isinstance(collidee, game_objects.Missile):
+            if collidee.player is self.player:
+                print "Death by self-missile"
+            else:
+                print "Death by player-missile: ", collidee.player.name, ". Delaying 10 seconds..."
+                pygame.time.wait(1000*10)
 
     def press_key(self, direction):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
 
     def next_move(self):
-        self.prepare_path()
-        next_node = self.path.popleft()
-        next_direction = self.direction_to_node(next_node)
+        if self.shoot_missile():
+            self.press_key(self.player.direction)
 
-        if self.player.direction == next_direction:
-            if self.shoot_missile():
-                self.press_key(next_direction)
-        else:
+        self.prepare_path()
+        next_direction = self.direction_to_node(self.path.popleft())
+        if next_direction != self.player.direction:
             self.press_key(next_direction)
+
+        # Display any visualizations
+        if any((self.enable_path_visualization, self.enable_safety_score_visualization, self.enable_line_of_fire_visualization)):
+            pygame.display.flip()
             
 
 

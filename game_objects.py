@@ -165,6 +165,9 @@ class Player(object):
         self.AI_engine = None
         self.onkill = None  # Get's set by an AI player - executes when you get killed
 
+    def get_length(self):
+        return len(self.parts)
+
     def respawn(self):
         part = self.parts.pop()
         part.x, part.y = self.spawn_coordinates
@@ -260,7 +263,7 @@ class Player(object):
 
     def kill(self, collidee=None):
         if self.onkill:
-            self.onkill()
+            self.onkill(collidee)
 
         self.is_dead = True
         for part in self.parts:
