@@ -137,6 +137,7 @@ class VincentAI(AIProcess):
                             self.board_modifiers[_x][_y] += 1
 
     def update_enemy_positions(self):
+        """ Update possible positions enemies up to _firing_range_ turns later. """
         self.player_positions = defaultdict(set)
         for i in range(1, firing_range + 1):
             if i == 1:
@@ -150,6 +151,8 @@ class VincentAI(AIProcess):
                         self.player_positions[i].add(next_move)
 
     def consider_fire(self):
+        """ Determine whether the player is in range of hitting an enemy up to
+            _firing_range_ turns away. """
         node = self.node
         for i in range(firing_range * 3):
             node = self.get_node_in_direction(node, self.player.direction)
@@ -160,7 +163,7 @@ class VincentAI(AIProcess):
         return False
 
     def update_missile_positions(self):
-        self.missile_possions = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
+        pass
 
     def get_apples(self, player, apples=None):
         """ Returns list of apples sorted by distance from player. """
