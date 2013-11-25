@@ -210,14 +210,14 @@ def main_loop():
                 player.direction) for player in game.players)):
                 shared_players[i] = v
 
-            if not game.use_multiprocessing:
-                map(lambda proc: proc.execute(), ai_processes)
-
             # Draw the screen
             game.screen.blit(background, (0, 0))
             game.draw()
             for effect in game.effects:
                 effect.draw()
+
+            if not game.use_multiprocessing:
+                map(lambda proc: proc.execute(), ai_processes)
 
             # Draw scoreboard
             score_icon_size = 30

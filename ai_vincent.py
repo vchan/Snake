@@ -7,7 +7,7 @@ import pygame
 from process import AIProcess
 import game
 
-VISUALIZE = False
+VISUALIZE = True
 OPPOSITE_DIRECTIONS = [game.RIGHT, game.LEFT, game.DOWN, game.UP,]
 _DIRECTIONS = ['left', 'right', 'up', 'down']
 
@@ -69,8 +69,8 @@ class VincentAI(AIProcess):
             return
         self.update_position()
         # Check for immediate danger
-        if self.get_node_in_direction(self.player.direction) in ('W', 'I', 'S', 'W',):
-            pass
+        #if self.get_node_in_direction(self.player.direction) in ('W', 'I', 'S', 'W',):
+        #    pass
 
         if not self.path:
             apple = self.get_best_apples()[0][1]
