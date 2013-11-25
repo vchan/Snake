@@ -222,30 +222,89 @@ def main_loop():
 
             # Draw scoreboard
             score_icon_size = 30
-            score_width = 150
-            score_x = game.WINDOW_WIDTH/2 - game.num_players*score_width/2 + 60
+            score_width = 55
+            score_margin = 120
+            all_score_widths = game.num_players * score_width + (game.num_players-1) * score_margin
+            score_x = (game.WINDOW_WIDTH - all_score_widths)/2
             score_y = game.WINDOW_HEIGHT - game.SCOREBOARD_HEIGHT + (game.SCOREBOARD_HEIGHT-score_icon_size)/2
             for i, player in enumerate(game.players):
-                rect = pygame.Rect(score_x + i*score_width, score_y, score_icon_size, score_icon_size)
-                score = pygame.font.SysFont('impact', 30).render(str(player.kills), 1, pygame.Color(255, 255, 255))
-                score_pos = score.get_rect(centerx=score_x + i*score_width + 50, centery=score_y + 15)
+                icon = pygame.Rect(score_x + i*(score_width+score_margin), score_y, score_icon_size, score_icon_size)
+                text = str(len(player.kills))
+
+                score = pygame.font.SysFont('impact', 30).render(text, 1, pygame.Color("white"))
+                score_pos = score.get_rect(left = icon.right + 10, centery = icon.centery)
+
                 game.screen.blit(score, score_pos)
-                pygame.draw.rect(game.screen, player.color, rect)
+                pygame.draw.rect(game.screen, player.color, icon)
 
             # Check for the win condition
-            winners = filter(lambda p: p.kills >= game.level.kills_to_win, game.players)
+            winners = filter(lambda p: len(p.kills) >= game.level.kills_to_win, game.players)
             if winners:
                 game_status = 'win'
-                if len(winners) > 1:
-                    text = pygame.font.SysFont("impact", 100).render("Draw!", 1, pygame.Color(255, 255, 255))
-                else:
-                    text = pygame.font.SysFont("impact", 100).render(winners[0].name + " wins!", 1, pygame.Color(255, 255, 255))
-                text_pos = text.get_rect(centerx = game.WINDOW_WIDTH/2, centery = game.WINDOW_HEIGHT/2 - 50)
-                game.screen.blit(text, text_pos)
 
-                text = pygame.font.SysFont("verdana", 15).render("Press [ENTER] to play again, or [ESC] to return to the main menu.", 1, pygame.Color(255, 255, 255))
-                text_pos = text.get_rect(centerx = game.WINDOW_WIDTH/2, centery = game.WINDOW_HEIGHT/2 + 40)
-                game.screen.blit(text, text_pos)
+                # Check for ties
+                least_deaths = min(len(w.deaths) for w in winners)
+                winners = filter(lambda w: len(w.deaths) == least_deaths, winners)
+                if len(winners) > 1:
+                    title = pygame.font.SysFont("impact", 100).render("Draw!", 1, pygame.Color("white"))
+                else:
+                    title = pygame.font.SysFont("impact", 100).render(winners[0].name + " wins!", 1, pygame.Color("white"))
+
+                # Draw title
+                title_pos = title.get_rect(centerx = game.WINDOW_WIDTH/2, centery = 200)
+                game.screen.blit(title, title_pos)
+
+                # Draw subtitle
+                subtext = pygame.font.SysFont("verdana", 15).render("Press [ENTER] to play again, or [ESC] to return to the main menu.", 1, pygame.Color("white"))
+                subtext_pos = subtext.get_rect(centerx = game.WINDOW_WIDTH/2, y = title_pos.bottom + 10)
+                game.screen.blit(subtext, subtext_pos)
+
+                # Draw summary
+                header_width = 200
+                header_height = 30
+                header_margin = 0
+                header_x = (game.WINDOW_WIDTH - header_width * game.num_players) / 2
+                header_y = subtext_pos.bottom + 50
+                cell_margin = 20
+
+                for i, player in enumerate(game.players):
+                    # Draw header box
+                    header = pygame.Rect(header_x + (header_width+header_margin)*i, header_y, header_width, header_height)
+                    pygame.draw.rect(game.screen, player.color, header)
+
+                    # Draw header text
+                    text = pygame.font.SysFont("arial", 16, bold=True).render(player.name, 1, pygame.Color("white"))
+                    text_pos = text.get_rect(centerx = header.centerx, centery = header.centery)
+                    game.screen.blit(text, text_pos)
+
+                    # Draw death summary
+                    s = "Total deaths: " + str(len(player.deaths))
+                    death_summary_font = pygame.font.SysFont("arial", 14, bold=True).render(s, 1, pygame.Color("white"))
+                    death_summary_pos = death_summary_font.get_rect(centerx = header.centerx, centery = header.bottom + cell_margin)
+                    game.screen.blit(death_summary_font, death_summary_pos)
+
+                    strings = []
+                    strings.append(str(len(filter(lambda c: isinstance(c, game_objects.SnakePart) and c.player is not player, player.deaths))) + " by collision")
+                    strings.append(str(len(filter(lambda c: isinstance(c, game_objects.Missile) and c.player is not player, player.deaths))) + " by missile")
+                    strings.append(str(len(filter(lambda c: isinstance(c, game_objects.Wall), player.deaths))) + " by wall")
+                    strings.append(str(len(filter(lambda c: (isinstance(c, game_objects.Missile) and c.player is player) or (isinstance(c, game_objects.SnakePart) and c.player is player), player.deaths))) + " by suicide")
+
+                    for i, s in enumerate(strings):
+                        text = pygame.font.SysFont("arial", 13).render(s, 1, pygame.Color("white"))
+                        text_pos = text.get_rect(centerx = header.centerx, centery = death_summary_pos.bottom + (i+1)*cell_margin)
+                        game.screen.blit(text, text_pos)
+
+                    # Draw kill summary
+                    s = "Total kills: " + str(len(player.kills))
+                    kill_summary_font = pygame.font.SysFont("arial", 14, bold=True).render(s, 1, pygame.Color("white"))
+                    kill_summary_pos = kill_summary_font.get_rect(centerx = header.centerx, centery = header.bottom + cell_margin + 130)
+                    game.screen.blit(kill_summary_font, kill_summary_pos)
+
+                    for i, opponent in enumerate(player.kills):
+                        text = pygame.font.SysFont("arial", 13).render(opponent.name, 1, opponent.color)
+                        text_pos = text.get_rect(centerx = header.centerx, centery = kill_summary_pos.bottom + (i+1)*cell_margin)
+                        game.screen.blit(text, text_pos)
+
 
             # Display!
             pygame.display.flip()

@@ -287,8 +287,11 @@ class JasonAI(AStar):
             for i, node in enumerate(nodes_in_range[1:5]):
                 if self.is_snake_head(node):
                     player = self.get_board_object(node).player
-                    if player.direction == self.get_opposite_direction(direction) and player.get_length() > 1:
-                        return 40 + i
+                    if player.get_length() > 1:
+                        if player.direction == self.get_opposite_direction(direction): # If opponent is turned towards us
+                            return 40 + i
+                        else: # Opponent can still kill us next turn, even if it's turned away from us
+                            return 50 + i
 
         return JasonAI.MAX_SAFETY_SCORE
 
