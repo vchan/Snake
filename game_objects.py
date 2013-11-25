@@ -29,6 +29,9 @@ class SnakePart(GameObject):
         super(SnakePart, self).__init__(x, y, color)
         self.player = player
 
+    def is_head(self):
+        return (self.x, self.y) == (self.player.x, self.player.y)
+
     def become_missile(self, x, y, direction):
         self.remove_from_board()
         if direction == game.LEFT:
@@ -162,7 +165,8 @@ class Player(object):
         self.is_invincible = False
         self.is_invisible = False
         self.invincible_frame_count = 0
-        self.kills = 0
+        self.deaths = []  # Array of things that collided with player
+        self.kills = []  # Array of players you've killed
         self.AI_engine = None
         self.onkill = None  # Get's set by an AI player - executes when you get killed
 
@@ -266,6 +270,8 @@ class Player(object):
         if self.onkill:
             self.onkill(collidee)
 
+        self.deaths.append(collidee)
+
         self.is_dead = True
         for part in self.parts:
             part.remove_from_board()
@@ -277,12 +283,21 @@ class Player(object):
         log_text = self.name + " died!"
         if isinstance(collidee, Wall):
             log_text = self.name + " ran into a wall."
-        elif isinstance(collidee, (SnakePart, Missile)):
+        elif isinstance(collidee, Missile):
             if collidee.player is self:
-                log_text = self.name + " killed themselves."
+                log_text = self.name + " shot themselves."
             else:
-                collidee.player.kills += 1
-                log_text = self.name + " got killed by " + collidee.player.name + "!"
+                collidee.player.kills.append(self)
+                log_text = self.name + " got shot by " + collidee.player.name + "!"
+        elif isinstance(collidee, SnakePart):
+            if collidee.player is self:
+                log_text = self.name + " ran into themselves."
+            else:
+                if collidee.is_head():
+                    log_text = self.name + " double-KOed " + collidee.player.name + "!"
+                else:
+                    collidee.player.kills.append(self)
+                    log_text = self.name + " ran into " + collidee.player.name + "!"
         game.log_screen.add(log_text)
         self.respawn()
 
