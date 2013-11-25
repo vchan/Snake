@@ -23,7 +23,7 @@ class Menu():
         self.selector_padding = 20
         self.spacing = spacing
         self.frames_per_second = 10
- 
+
     def show(self):
         clock = pygame.time.Clock()
         background = pygame.Surface(game.screen.get_size()).convert()
@@ -121,18 +121,21 @@ def main_loop():
 
             # If single player, add an AI player
             if game.num_players == 1:
-                game.num_players = 2
+                game.num_players = 4
                 game.init_level()
 
                 ai_engines = []
                 ai_processes = []
+                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[game.ai_index])
                 ai_engines.append(ai_classes[game.ai_index])
                 shared_apples = multiprocessing.Array(process.GameObject,
                         list((apple.x, apple.y) for apple in game.apples))
                 shared_players = multiprocessing.Array(process.MovableGameObject,
                         list(((player.x, player.y), player.direction)
                             for player in game.players))
-                ai_processes = [_class(player_index=i+game.num_players-1, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
+                ai_processes = [_class(player_index=i, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                 # Load threaded AI
                 if game.use_multiprocessing:
                     map(lambda proc: proc.start(), ai_processes)

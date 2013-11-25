@@ -2,6 +2,7 @@ from collections import deque
 import pygame
 import game
 import game_effects
+import time
 
 class GameObject(object):
     def __init__(self, x, y, color):

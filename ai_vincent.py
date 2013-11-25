@@ -7,7 +7,7 @@ import pygame
 from process import AIProcess
 import game
 
-VISUALIZE = False
+VISUALIZE = True
 
 class Node(object):
     def __init__(self, x, y):
@@ -15,9 +15,10 @@ class Node(object):
         self.f_score = 0
         self.g_score = 0
         self.h_score = 0
-        self.width = game.CELL_WIDTH
-        self.height = game.CELL_HEIGHT
-        self.rect = pygame.Rect(x*self.width, y*self.height, self.width, self.height)
+
+        width = game.CELL_WIDTH
+        height = game.CELL_HEIGHT
+        self.rect = pygame.Rect(x*width, y*height, width, height)
 
     def __lt__(self, other):
         """ Used by heapq for maintaining the priority queue. """
@@ -61,8 +62,9 @@ class VincentAI(AIProcess):
             # Player has not moved yet. No need to do anything.
             return
         self.update_position()
-        if not self.path or self.goal != self.get_closest_apple()[1]:
-            self.goal = self.get_closest_apple()[1]
+        if not self.path:
+            apple = self.get_best_apples()[0][1]
+            self.goal = Node(apple.x, apple.y)
             self.path = self.a_star(self.goal)
             if not self.path:
                 return
@@ -75,10 +77,45 @@ class VincentAI(AIProcess):
             self.press_up()
         elif next_move[1] > self.player.y and self.player.direction != game.DOWN:
             self.press_down()
+        if self.reconsider_path():
+            self.path = None
 
-    def get_closest_apple(self):
-        """ Returns closest apple and its distance to player. """
-        return min((self.dist_between(self.player, apple), apple) for apple in self.apples)
+    def reconsider_path(self):
+        if not self.path or self.board[self.goal.x][self.goal.y] != 'A':
+            return True
+        for i in range(-1, -6, -1):
+            if i < -len(self.path):
+                break
+            step = self.path[i]
+            x, y = step
+            if self.board[x][y] in ('W', 'I', 'S', 'M',):
+                return True
+        return False
+
+    def get_apples(self, player, apples=None):
+        """ Returns list of apples sorted by distance from player. """
+        apples = apples or self.apples
+        apples = [(self.dist_between(player, apple), apple) for apple in apples]
+        return sorted(apples)
+
+    def get_players_apples(self):
+        """ Get list of players and the their closest apples. """
+        return [(player, self.get_apples(player)[0]) for player in self._players]
+
+    def get_viable_apples(self):
+        """ Filter out apples that are closer to other players than you. """
+        apples = self.apples[:]
+        for player, data in self.get_players_apples():
+            dist, apple = data
+            if player != self.player and apple in apples and dist < self.dist_between(self.player, apple):
+                apples.remove(apple)
+        return apples
+
+    def get_best_apples(self):
+        """ Get apples from list of viable apples sorted by distance from
+            player. """
+        apples = self.get_viable_apples() or self.apples
+        return self.get_apples(self.player, apples)
 
     def dist_between(self, node1, node2):
         """ Calculate the least number of steps between node1 and node2. Takes into
@@ -90,7 +127,6 @@ class VincentAI(AIProcess):
 
     def a_star(self, goal):
         start = Node(self.player.x, self.player.y)
-        goal = Node(goal.x, goal.y)
         closed_set = set() # The set of nodes already evaluated
         open_heap = [start] # The set of tentative nodes to be evaluated
         came_from = {} # The map of navigated nodes
@@ -103,6 +139,8 @@ class VincentAI(AIProcess):
         while open_heap:
             current = heapq.heappop(open_heap)
             if current == goal:
+                if VISUALIZE:
+                    pygame.display.flip()
                 return self.reconstruct_path(came_from, goal.get_coordinates())
             closed_set.add(current)
             current.draw(pygame.Color(55, 55, 55))
@@ -122,9 +160,8 @@ class VincentAI(AIProcess):
                     if neighbor not in open_heap:
                         heapq.heappush(open_heap, neighbor)
                         neighbor.draw(pygame.Color(100, 100, 100))
-            if VISUALIZE:
-                pygame.display.flip()
         # No path found
+        self.path = None
 
     def get_walkable_neighbors(self, node):
         """ Evaluate the node's 4 neighbors and return the walkable ones. """
@@ -138,7 +175,7 @@ class VincentAI(AIProcess):
                 y = game.BOARD_HEIGHT-1
             if y >= game.BOARD_HEIGHT:
                 y = 0
-            if self.board[x][y] not in ('W', 'S', 'M'):
+            if self.board[x][y] not in ('W', 'I', 'S', 'M'):
                 return Node(x, y)
 
         for offset in (-1, 1):
