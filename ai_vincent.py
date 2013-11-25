@@ -8,6 +8,8 @@ from process import AIProcess
 import game
 
 VISUALIZE = True
+OPPOSITE_DIRECTIONS = [game.RIGHT, game.LEFT, game.DOWN, game.UP,]
+_DIRECTIONS = ['left', 'right', 'up', 'down']
 
 class Node(object):
     def __init__(self, x, y):
@@ -68,16 +70,18 @@ class VincentAI(AIProcess):
             self.path = self.a_star(self.goal)
             if not self.path:
                 return
+
         next_move = self.path.pop()
-        if next_move[0] > self.player.x and self.player.direction != game.RIGHT:
-            self.press_right()
-        elif next_move[0] < self.player.x and self.player.direction != game.LEFT:
-            self.press_left()
-        elif next_move[1] < self.player.y and self.player.direction != game.UP:
-            self.press_up()
-        elif next_move[1] > self.player.y and self.player.direction != game.DOWN:
-            self.press_down()
-        if self.reconsider_path():
+        player_node = Node(self.player.x, self.player.y)
+        moved = False
+        for direction in [game.LEFT, game.RIGHT, game.UP, game.DOWN,]:
+            if self.get_node_in_direction(player_node,
+                    direction).get_coordinates() == next_move:
+                moved = True
+                if self.player.direction != direction:
+                    getattr(self, 'press_%s' % _DIRECTIONS[direction])()
+                break
+        if not moved or self.reconsider_path():
             self.path = None
 
     def reconsider_path(self):
@@ -107,7 +111,7 @@ class VincentAI(AIProcess):
         apples = self.apples[:]
         for player, data in self.get_players_apples():
             dist, apple = data
-            if player != self.player and apple in apples and dist < self.dist_between(self.player, apple):
+            if player != self.player and apple in apples and dist <= self.dist_between(self.player, apple):
                 apples.remove(apple)
         return apples
 
@@ -127,7 +131,8 @@ class VincentAI(AIProcess):
 
     def a_star(self, goal):
         start = Node(self.player.x, self.player.y)
-        closed_set = set() # The set of nodes already evaluated
+        behind_node = self.get_node_in_direction(start, OPPOSITE_DIRECTIONS[self.player.direction])
+        closed_set = set([behind_node,]) # The set of nodes already evaluated
         open_heap = [start] # The set of tentative nodes to be evaluated
         came_from = {} # The map of navigated nodes
 
@@ -165,25 +170,10 @@ class VincentAI(AIProcess):
 
     def get_walkable_neighbors(self, node):
         """ Evaluate the node's 4 neighbors and return the walkable ones. """
-        def check_node(x, y):
-            # Account for board wrapping
-            if x < 0:
-                x = game.BOARD_WIDTH-1
-            if x >= game.BOARD_WIDTH:
-                x = 0
-            if y < 0:
-                y = game.BOARD_HEIGHT-1
-            if y >= game.BOARD_HEIGHT:
-                y = 0
+        for direction in [game.LEFT, game.RIGHT, game.UP, game.DOWN,]:
+            neighbor = self.get_node_in_direction(node, direction)
+            x, y = neighbor.x, neighbor.y
             if self.board[x][y] not in ('W', 'I', 'S', 'M'):
-                return Node(x, y)
-
-        for offset in (-1, 1):
-            neighbor = check_node(node.x + offset, node.y)
-            if neighbor:
-                yield neighbor
-            neighbor = check_node(node.x, node.y + offset)
-            if neighbor:
                 yield neighbor
 
     def heuristic_cost_estimate(self, start, goal):
@@ -195,3 +185,25 @@ class VincentAI(AIProcess):
             path.append(current_node)
             current_node = came_from[current_node]
         return path
+
+    def get_node_in_direction(self, node, direction):
+        x, y = node.x, node.y
+        if direction == game.LEFT:
+            x -= 1
+        elif direction == game.RIGHT:
+            x += 1
+        elif direction == game.UP:
+            y -= 1
+        elif direction == game.DOWN:
+            y += 1
+
+        # Account for board wrapping
+        if x < 0:
+            x = game.BOARD_WIDTH-1
+        if x >= game.BOARD_WIDTH:
+            x = 0
+        if y < 0:
+            y = game.BOARD_HEIGHT-1
+        if y >= game.BOARD_HEIGHT:
+            y = 0
+        return Node(x, y)
