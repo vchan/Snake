@@ -8,11 +8,11 @@ from pygame.locals import *
 import game
 import game_objects
 import level
-import ai_jason
 
 import process
 from ai_vincent import VincentAI
-ai_classes = [VincentAI, ai_jason.JasonAI,]
+from ai_jason import JasonAI
+ai_classes = [VincentAI, JasonAI]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -135,7 +135,7 @@ def main_loop():
                 shared_players = multiprocessing.Array(process.MovableGameObject,
                         list(((player.x, player.y), player.direction)
                             for player in game.players))
-                ai_processes = [_class(player_index=i, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
+                ai_processes = [_class(player_index=i, board=game.shared_board, players=shared_players, apples=shared_apples, player=game.players[i], args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                 # Load threaded AI
                 if game.use_multiprocessing:
                     map(lambda proc: proc.start(), ai_processes)
@@ -145,7 +145,6 @@ def main_loop():
         # Start game loop
         return_to_menu = False
         game_status = None
-        ai_frame_count = 1
 
         while not return_to_menu:
             clock.tick(game.frames_per_second)
@@ -160,15 +159,9 @@ def main_loop():
                 except Queue.Empty, qe:
                     break
 
-            # Process AI next-moves. We're syncing frames with player update_position()
-            if ai_frame_count < 3:
-                ai_frame_count += 1
-
-            else:
-                for player in game.players:
-                    if player.AI_engine:
-                        player.AI_engine.next_move()
-                ai_frame_count = 1
+            # Process non multiprocessing AI moves
+            if not game.use_multiprocessing:
+                map(lambda proc: proc.execute(), ai_processes)
 
             # Get input
             for event in pygame.event.get():
@@ -214,9 +207,6 @@ def main_loop():
             game.draw()
             for effect in game.effects:
                 effect.draw()
-
-            if not game.use_multiprocessing:
-                map(lambda proc: proc.execute(), ai_processes)
 
             # Draw scoreboard
             score_icon_size = 30
