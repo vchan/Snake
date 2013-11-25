@@ -138,7 +138,6 @@ def main_loop():
                 ai_processes = [_class(player_index=i, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                 # Load threaded AI
                 if game.use_multiprocessing:
-                    map(lambda proc: proc.start(), ai_processes)
             else:
                 game.init_level()
 
