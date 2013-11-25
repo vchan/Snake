@@ -7,9 +7,11 @@ import pygame
 from process import AIProcess
 import game
 
-VISUALIZE = True
+VISUALIZE = False
 OPPOSITE_DIRECTIONS = [game.RIGHT, game.LEFT, game.DOWN, game.UP,]
 _DIRECTIONS = ['left', 'right', 'up', 'down']
+
+HEURISTIC_SCALE = 10
 
 class Node(object):
     def __init__(self, x, y):
@@ -55,6 +57,8 @@ class VincentAI(AIProcess):
         self.update_position()
         self.goal = None
         self.path = None
+        self.board_modifiers = None
+        self.update_board_modifiers()
 
     def update_position(self):
         self.last_known_position = (self.player.x, self.player.y)
@@ -64,6 +68,10 @@ class VincentAI(AIProcess):
             # Player has not moved yet. No need to do anything.
             return
         self.update_position()
+        # Check for immediate danger
+        if self.get_node_in_direction(self.player.direction) in ('W', 'I', 'S', 'W',):
+            pass
+
         if not self.path:
             apple = self.get_best_apples()[0][1]
             self.goal = Node(apple.x, apple.y)
@@ -82,6 +90,7 @@ class VincentAI(AIProcess):
                 break
         if not moved or self.reconsider_path():
             self.path = None
+            self.update_board_modifiers()
 
     def reconsider_path(self):
         if not self.path or self.board[self.goal.x][self.goal.y] != 'A':
@@ -94,6 +103,25 @@ class VincentAI(AIProcess):
             if self.board[x][y] in ('W', 'I', 'S', 'M',):
                 return True
         return False
+
+    def update_board_modifiers(self):
+        self.board_modifiers = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
+        for x, row in enumerate(self.board):
+            for y, obj in enumerate(row):
+                if obj in ('W', 'I', 'S', 'M',):
+                    for i in (-1, 0, 1,):
+                        for j in (-1, 0, 1):
+                            _x, _y = x + i, y + j
+                            # Account for board wrapping
+                            if _x < 0:
+                                _x = game.BOARD_WIDTH-1
+                            if _x >= game.BOARD_WIDTH:
+                                _x = 0
+                            if _y < 0:
+                                _y = game.BOARD_HEIGHT-1
+                            if _y >= game.BOARD_HEIGHT:
+                                _y = 0
+                            self.board_modifiers[_x][_y] += 1
 
     def get_apples(self, player, apples=None):
         """ Returns list of apples sorted by distance from player. """
@@ -176,7 +204,9 @@ class VincentAI(AIProcess):
                 yield neighbor
 
     def heuristic_cost_estimate(self, start, goal):
-        return self.dist_between(start, goal) * 0
+        estimate = self.dist_between(start, goal) * HEURISTIC_SCALE
+        estimate += self.board_modifiers[start.x][start.y] * HEURISTIC_SCALE
+        return estimate
 
     def reconstruct_path(self, came_from, current_node):
         path = deque()
