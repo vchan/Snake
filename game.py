@@ -1,10 +1,14 @@
 import ConfigParser
+import multiprocessing
+from ctypes import c_char
 from random import randrange, randint
 
 import pygame
 from pygame.locals import *
 import game_objects
 import game_effects
+import process
+serializer = process.Serializer()
 
 NAME = "Battle Snake %i" % randint(3000, 3019)  # Choose a random futuristic-looking year :)
 WINDOW_WIDTH = 1280
@@ -66,10 +70,15 @@ class BoardRow(list):
         if value and self.__getitem__(key):
             raise CollisionError(value, self.__getitem__(key))
         super(BoardRow, self).__setitem__(key, value)
+        shared_board[board.index(self)][key] = serializer.translate_board_obj(value)
+
+# Board in shared memory used by AI processes
+shared_board = multiprocessing.Array(c_char * BOARD_HEIGHT,
+        ((c_char * BOARD_HEIGHT) * BOARD_WIDTH)())
+
 board = []
 for i in range(BOARD_WIDTH):
     board.append(BoardRow([None,] * BOARD_HEIGHT))
-
 
 def update():
     for obj in apples + missiles:

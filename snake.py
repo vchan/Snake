@@ -10,8 +10,9 @@ import game_objects
 import level
 import ai_jason
 
+import process
 from ai_vincent import VincentAI
-ai_classes = [VincentAI]
+ai_classes = [VincentAI, ai_jason.JasonAI,]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -22,7 +23,7 @@ class Menu():
         self.selector_padding = 20
         self.spacing = spacing
         self.frames_per_second = 10
- 
+
     def show(self):
         clock = pygame.time.Clock()
         background = pygame.Surface(game.screen.get_size()).convert()
@@ -100,8 +101,6 @@ def main_loop():
     background.fill(pygame.Color(0, 0, 0))
 
     input_queue = multiprocessing.Queue()
-    shared_data = multiprocessing.Manager().list()
-    shared_data.append({})
 
     while True:
         # Choose player mode
@@ -119,33 +118,27 @@ def main_loop():
             continue
         else:
             game.level = levels[selection]
-            
+
             # If single player, add an AI player
             if game.num_players == 1:
-                game.num_players = 2
+                game.num_players = 4
                 game.init_level()
 
+                ai_engines = []
+                ai_processes = []
+                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[game.ai_index])
+                shared_apples = multiprocessing.Array(process.GameObject,
+                        list((apple.x, apple.y) for apple in game.apples))
+                shared_players = multiprocessing.Array(process.MovableGameObject,
+                        list(((player.x, player.y), player.direction)
+                            for player in game.players))
+                ai_processes = [_class(player_index=i, board=game.shared_board, players=shared_players, apples=shared_apples, args=(input_queue,)) for i, _class in enumerate(ai_engines)]
                 # Load threaded AI
                 if game.use_multiprocessing:
-                    ai_engines = []
-                    ai_processes = []
-                    if game.use_multiprocessing:
-                        ai_engines.append(ai_classes[game.ai_index])
-                        shared_data[0] = {'board': game.board, 'players': game.players,
-                                'apples': game.apples,}
-                        ai_processes = [_class(player_index=i+game.num_players-1,
-                            args=(shared_data, input_queue,)) for i, _class in
-                            enumerate(ai_engines)]
-                        map(lambda proc: proc.start(), ai_processes)
-                else:
-                    # game.players[1].name = "Bebe Bot"
-                    # game.players[1].AI_engine = ai_jason.JasonAI(game.players[1])
-                    game.num_players = 4
-                    game.init_level()
-                    for i in range(0, game.num_players):
-                        game.players[i].name = "Bebe Bot %i" % i
-                        game.players[i].AI_engine = ai_jason.JasonAI(game.players[i])
-
+                    map(lambda proc: proc.start(), ai_processes)
             else:
                 game.init_level()
 
@@ -157,7 +150,7 @@ def main_loop():
         while not return_to_menu:
             clock.tick(game.frames_per_second)
 
-            while game.use_multiprocessing:
+            while True:
                 # Process key presses from AI threads.
                 # Pulls values from input queue, creates pygame Events, and
                 # submits to event queue.
@@ -210,15 +203,20 @@ def main_loop():
             game.update()
 
             # Update shared board
-            if game.use_multiprocessing:
-                shared_data[0] = {'board': game.board, 'players': game.players,
-                    'apples': game.apples,}
+            for i, v in enumerate([(apple.x, apple.y) for apple in game.apples]):
+                shared_apples[i] = v
+
+            for i, v in enumerate([((player.x, player.y), player.direction, player.get_length()) for player in game.players]):
+                shared_players[i] = v
 
             # Draw the screen
             game.screen.blit(background, (0, 0))
             game.draw()
             for effect in game.effects:
                 effect.draw()
+
+            if not game.use_multiprocessing:
+                map(lambda proc: proc.execute(), ai_processes)
 
             # Draw scoreboard
             score_icon_size = 30
