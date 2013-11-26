@@ -105,7 +105,7 @@ def main_loop():
 
     while True:
         # Choose player mode
-        options = ["Single player", "Two players", "Three players", "Four players"]
+        options = ["AI Demo", "Two players", "Three players", "Four players"]
         selection = Menu(options).show()
         if selection is False:
             return
@@ -142,9 +142,9 @@ def main_loop():
                 # Load threaded AI
                 if game.use_multiprocessing:
                     map(lambda proc: proc.start(), ai_processes)
-                game.players[0].name = 'The Spirit of Vincent'
+                game.players[0].name = 'The Spirit of AI'
                 game.players[1].name = 'Bebe Bot'
-                game.players[2].name = 'The Mind of Vincent'
+                game.players[2].name = 'The Will of AI'
                 game.players[3].name = 'Bot Choy'
             else:
                 game.init_level()
@@ -174,7 +174,7 @@ def main_loop():
                 for proc in ai_processes:
                     if isinstance(proc, VincentAI):
                         proc.execute()
-                
+
                 if ai_frame_count < 3:
                     ai_frame_count += 1
                 else:
