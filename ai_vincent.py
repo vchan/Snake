@@ -79,7 +79,7 @@ class VincentAI(AIProcess):
             return
         self.update_position()
         self.update_enemy_positions()
-        if self.consider_fire():
+        if self.player.length > 3 and self.consider_fire():
             getattr(self, 'press_%s' % _DIRECTIONS[self.player.direction])()
 
         if not self.path:
