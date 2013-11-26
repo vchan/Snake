@@ -459,13 +459,13 @@ class JasonAI(AStar):
                 print "Death by self-collision"
             else:
                 print "Death by player-collision: ", collidee.player.name, ". Delaying 10 seconds..."
-                pygame.time.wait(1000*10)
+                # pygame.time.wait(1000*10)
         elif isinstance(collidee, game_objects.Missile):
             if collidee.player is self.player:
                 print "Death by self-missile"
             else:
                 print "Death by player-missile: ", collidee.player.name, ". Delaying 10 seconds..."
-                pygame.time.wait(1000*10)
+                # pygame.time.wait(1000*10)
 
     def press_key(self, direction):
         pygame.event.post(pygame.event.Event(KEYDOWN, {'key': game.player_controls[self.player.player_number][direction]}))
