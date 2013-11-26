@@ -127,10 +127,12 @@ def main_loop():
 
                 ai_engines = []
                 ai_processes = []
-                ai_engines.append(ai_classes[game.ai_index])
-                ai_engines.append(ai_classes[game.ai_index])
-                ai_engines.append(ai_classes[game.ai_index])
-                ai_engines.append(ai_classes[game.ai_index])
+                ai_engines.append(ai_classes[0])
+                ai_engines.append(ai_classes[1])
+                ai_engines.append(ai_classes[0])
+                ai_engines.append(ai_classes[1])
+                #ai_engines.append(ai_classes[game.ai_index])
+                #ai_engines.append(ai_classes[game.ai_index])
                 shared_apples = multiprocessing.Array(process.GameObject,
                         list((apple.x, apple.y) for apple in game.apples))
                 shared_players = multiprocessing.Array(process.MovableGameObject,
@@ -140,6 +142,10 @@ def main_loop():
                 # Load threaded AI
                 if game.use_multiprocessing:
                     map(lambda proc: proc.start(), ai_processes)
+                game.players[0].name = 'The Spirit of Vincent'
+                game.players[1].name = 'Bebe Bot'
+                game.players[2].name = 'The Mind of Vincent'
+                game.players[3].name = 'Bot Choy'
             else:
                 game.init_level()
 
@@ -164,11 +170,17 @@ def main_loop():
 
             # Process non multiprocessing AI moves
             if not game.use_multiprocessing:
-                map(lambda proc: proc.execute(), ai_processes)
+                # map(lambda proc: proc.execute(), ai_processes)
+                for proc in ai_processes:
+                    if isinstance(proc, VincentAI):
+                        proc.execute()
+                
                 if ai_frame_count < 3:
                     ai_frame_count += 1
                 else:
-                    # map(lambda proc: proc.execute(), ai_processes)
+                    for proc in ai_processes:
+                        if isinstance(proc, JasonAI):
+                            proc.execute()
                     ai_frame_count = 1
 
             # Get input
