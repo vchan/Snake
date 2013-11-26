@@ -1,6 +1,7 @@
 from collections import deque
 import multiprocessing
 import Queue
+import time
 
 import pygame
 from pygame.locals import *
@@ -146,6 +147,7 @@ def main_loop():
         return_to_menu = False
         game_status = None
         ai_frame_count = 1
+        start_time = time.time()
 
         while not return_to_menu:
             clock.tick(game.frames_per_second)
@@ -230,6 +232,19 @@ def main_loop():
 
                 game.screen.blit(score, score_pos)
                 pygame.draw.rect(game.screen, player.color, icon)
+
+            runtime = int(time.time() - start_time)
+            runtime_min = runtime // 60
+            runtime_sec = runtime % 60
+            if runtime_min < 10:
+                runtime_min = "0" + str(runtime_min)
+            if runtime_sec < 10:
+                runtime_sec = "0" + str(runtime_sec)
+            runtime_text = "%s : %s" % (runtime_min, runtime_sec)
+
+            time_text = pygame.font.SysFont('impact', 24).render(runtime_text, 1, pygame.Color("white"))
+            time_pos = time_text.get_rect(x = game.WINDOW_WIDTH - 95, y = game.WINDOW_HEIGHT - 54)
+            game.screen.blit(time_text, time_pos)
 
             # Check for the win condition
             winners = filter(lambda p: len(p.kills) >= game.level.kills_to_win, game.players)
