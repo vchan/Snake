@@ -162,12 +162,12 @@ def main_loop():
 
             # Process non multiprocessing AI moves
             if not game.use_multiprocessing:
+                map(lambda proc: proc.execute(), ai_processes)
                 if ai_frame_count < 3:
                     ai_frame_count += 1
                 else:
-                    map(lambda proc: proc.execute(), ai_processes)
+                    # map(lambda proc: proc.execute(), ai_processes)
                     ai_frame_count = 1
-
 
             # Get input
             for event in pygame.event.get():

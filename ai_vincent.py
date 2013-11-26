@@ -80,7 +80,6 @@ class VincentAI(AIProcess):
         self.update_position()
         self.update_enemy_positions()
         if self.consider_fire():
-            self.fired = True
             getattr(self, 'press_%s' % _DIRECTIONS[self.player.direction])()
 
         if not self.path:
@@ -91,10 +90,26 @@ class VincentAI(AIProcess):
                 return
 
         next_move = self.path.pop()
-        player_node = Node(self.player.x, self.player.y)
+        next_move = Node(next_move[0], next_move[1])
+        if self.dist_between(self.node, next_move) != 1:
+            # Something went wrong and we strayed off the path
+            next_move = self.get_node_in_direction(self.node, self.player.direction)
+            self.path = None
+
+        if self.missile_positions[next_move.x][next_move.y] or self.board[next_move.x][next_move.y] in ('W', 'I', 'S', 'M',):
+            # Running into something. Take evasive action!
+            possible_moves = []
+            for n in self.get_walkable_neighbors(self.node):
+                if self.missile_positions[n.x][n.y] or self.board[n.x][n.y] in ('W', 'I', 'S', 'M',):
+                    continue
+                possible_moves.append(n)
+            if possible_moves:
+                next_move = min([(self.board_modifiers[m.x][m.y], m) for m in possible_moves])[1]
+
         moved = False
         for direction in [game.LEFT, game.RIGHT, game.UP, game.DOWN,]:
-            if self.get_node_in_direction(player_node, direction).get_coordinates() == next_move:
+            node = self.get_node_in_direction(self.node, direction)
+            if node == next_move:
                 moved = True
                 if self.player.direction != direction:
                     getattr(self, 'press_%s' % _DIRECTIONS[direction])()
@@ -117,7 +132,7 @@ class VincentAI(AIProcess):
         return False
 
     def update_board_modifiers(self):
-        """ Update modifiers that is used in A* heuristic estimates. """
+        """ Update modifiers that are used in A* heuristic estimates. """
         self.board_modifiers = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
         for x, row in enumerate(self.board):
             for y, obj in enumerate(row):
@@ -139,6 +154,7 @@ class VincentAI(AIProcess):
     def update_enemy_positions(self):
         """ Update possible positions enemies up to _firing_range_ turns later. """
         self.player_positions = defaultdict(set)
+        self.missile_positions = [[0,] * game.BOARD_HEIGHT for i in range(game.BOARD_WIDTH)]
         for i in range(1, firing_range + 1):
             if i == 1:
                 nodes = [Node(player.x, player.y) for player in self._players if Node(player.x, player.y) != self.node]
@@ -149,6 +165,20 @@ class VincentAI(AIProcess):
                     next_move = self.get_node_in_direction(node, direction)
                     if self.board[next_move.x][next_move.y] not in ('W', 'I', 'S', 'M',):
                         self.player_positions[i].add(next_move)
+
+        for m in game.missiles:
+            node = Node(m.x, m.y)
+            for i in range(6):
+                node = self.get_node_in_direction(node, m.direction)
+                self.missile_positions[node.x][node.y] = 1
+
+        for player in self._players:
+            node = Node(player.x, player.y)
+            if node == self.node:
+                continue
+            for i in range(6):
+                node = self.get_node_in_direction(node, player.direction)
+                self.missile_positions[node.x][node.y] = 1
 
     def consider_fire(self):
         """ Determine whether the player is in range of hitting an enemy up to
@@ -161,9 +191,6 @@ class VincentAI(AIProcess):
             if node in self.player_positions[i//3 + 1]:
                 return True
         return False
-
-    def update_missile_positions(self):
-        pass
 
     def get_apples(self, player, apples=None):
         """ Returns list of apples sorted by distance from player. """
