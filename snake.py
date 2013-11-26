@@ -13,7 +13,8 @@ import level
 import process
 from ai_vincent import VincentAI
 from ai_jason import JasonAI
-ai_classes = [VincentAI, JasonAI]
+from ai_jameel import JameelAI
+ai_classes = [VincentAI, JasonAI, JameelAI]
 
 class Menu():
     def __init__(self, options, spacing=50):
@@ -129,7 +130,7 @@ def main_loop():
                 ai_processes = []
                 ai_engines.append(ai_classes[0])
                 ai_engines.append(ai_classes[1])
-                ai_engines.append(ai_classes[0])
+                ai_engines.append(ai_classes[2])
                 ai_engines.append(ai_classes[1])
                 shared_apples = multiprocessing.Array(process.GameObject,
                         list((apple.x, apple.y) for apple in game.apples))
