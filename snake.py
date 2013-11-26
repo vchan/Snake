@@ -172,7 +172,7 @@ def main_loop():
             if not game.use_multiprocessing:
                 # map(lambda proc: proc.execute(), ai_processes)
                 for proc in ai_processes:
-                    if isinstance(proc, VincentAI):
+                    if not isinstance(proc, JasonAI):
                         proc.execute()
 
                 if ai_frame_count < 3:
