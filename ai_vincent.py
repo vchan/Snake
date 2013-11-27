@@ -71,7 +71,7 @@ class VincentAI(AIProcess):
         self.last_known_position = (self.player.x, self.player.y)
         self.node = Node(self.player.x, self.player.y)
         global firing_range
-        firing_range = min(self.player.length - 3, 5)
+        firing_range = min(self.player.length - 1, 5)
 
     def execute(self):
         if self.last_known_position == (self.player.x, self.player.y):
@@ -79,7 +79,7 @@ class VincentAI(AIProcess):
             return
         self.update_position()
         self.update_enemy_positions()
-        if self.player.length > 3 and self.consider_fire():
+        if self.consider_fire():
             getattr(self, 'press_%s' % _DIRECTIONS[self.player.direction])()
 
         if not self.path:
