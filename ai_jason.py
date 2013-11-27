@@ -248,7 +248,7 @@ class JasonAI(AStar):
         elif y == self.player.y+1 or (self.player.y == game.BOARD_HEIGHT-1 and y == 0):
             return game.DOWN
         else:
-            # print "Player:", (self.player.x, self.player.y), " node:", node
+            print "Player:", (self.player.x, self.player.y), " node:", node
             raise Exception("Node not next to player")
 
     def get_safety_score(self, direction_to_check):
@@ -314,12 +314,11 @@ class JasonAI(AStar):
 
         # If we're forced to choose a suboptimal path, shoot a missile.
         if safest_score < JasonAI.MAX_SAFETY_SCORE:
-            # print "(P", self.player.player_number , ") Safest path not available. Scores:", safety_scores
-            pass
+            print "(P", self.player.player_number , ") Safest path not available. Scores:", safety_scores
 
         # If there are no safe moves
         if not safest_score:
-            # print "NO MORE SAFE MOVES! Scores:", safety_scores
+            print "NO MORE SAFE MOVES! Scores:", safety_scores
             return node_ahead
 
         # Keep going if it's safe
@@ -370,7 +369,7 @@ class JasonAI(AStar):
                 self.prepare_closest_apple_path()
             except Exception:
                 self.survival_cycles = 5
-                # print "No path to closest apple. Surviving 10 cycles"
+                print "No path to closest apple. Surviving 10 cycles"
 
         # Check if the first node in the path is safe
         if self.path:
@@ -492,12 +491,7 @@ class JasonAI(AStar):
 
         # Get the next move
         self.prepare_path()
-        try:
-            next_direction = self.direction_to_node(self.path.popleft())
-        except Exception:
-            print "Path broke. Reassigning a new path..."
-            self.path = None
-
+        next_direction = self.direction_to_node(self.path.popleft())
         if next_direction != self.player.direction:
             self.press_key(next_direction)
 
